@@ -111,7 +111,7 @@ plugin_menu = []  # Empty list of lists for plugin links (e.g. ['name', 'URL'])
 ### FIXME
 #srvals = [0] * (sd['nst'])  # Shift Register values
 #output_srvals = [0] * (sd['nst'])  # Shift Register values last set by set_output()
-output_srvals_lock = RLock()
+#output_srvals_lock = RLock()
 
 #rovals = [0] * sd['nbrd'] * 7  # Run Once durations
 snames = station_names()  # Load station names from file
@@ -130,9 +130,9 @@ rs = []  # run schedule
 ######
 
 lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
-scount = 0  # Station count, used in set station to track on stations with master association.
+#scount = 0  # Station count, used in set station to track on stations with master association.
 
-use_gpio_pins = True
+#use_gpio_pins = True
 
 
 options = [
