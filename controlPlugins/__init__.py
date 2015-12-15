@@ -1,9 +1,9 @@
-from glob import glob
+
 import keyword
 import re
 import sys
 import os
-import stat
+
 from os.path import dirname, join, split, splitext
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
