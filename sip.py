@@ -4,24 +4,21 @@
 import i18n
 
 import json
-import ast
+import ast                                                                                                
 import time
 import thread
 from calendar import timegm
 import sys
 sys.path.append('./plugins')
+sys.path.append('./controlPlugins' )
 
 import web  # the Web.py module. See webpy.org (Enables the Python SIP web interface)
 
 import gv
 from helpers import plugin_adjustment, prog_match, schedule_stations, log_run, stop_onrain, check_rain, jsave, station_names, get_rpi_revision
 from urls import urls  # Provides access to URLs for UI pages
-from gpio_pins import set_output
 from ReverseProxied import ReverseProxied
 
-# do not call set output until plugins are loaded because it should NOT be called
-# if gv.use_gpio_pins is False (which is set in relay board plugin.
-# set_output()
 
 def timing_loop():
     """ ***** Main timing algorithm. Runs in a separate thread.***** """
@@ -38,42 +35,40 @@ def timing_loop():
                 last_min = gv.now / 60
                 extra_adjustment = plugin_adjustment()
                 for i, p in enumerate(gv.pd):  # get both index and prog item
-                    # check if program time matches current time, is active, and has a duration
-                    if prog_match(p) and p[0] and p[6]:
-                        # check each station for boards listed in program up to number of boards in Options
-                        for b in range(len(p[7:7 + gv.sd['nbrd']])):
-                            for s in range(8):
-                                sid = b * 8 + s  # station index
-                                if sid + 1 == gv.sd['mas']:
-                                    continue  # skip if this is master station
-                                if gv.srvals[sid]:  # skip if currently on
+                    # check if program time matches current time, is active, has a duration and has stations asigned
+                    if prog_match(p) and p[0] and p[6] and p[7]:
+                        # check each station
+                        for station in p[7]:
+                            if station == gv.sd['mas'] or gv.scontrol.stationIsOn(station):
+                                continue
+#							for s in range(8):
+#								sid = b * 8 + s  # station index - b is the board numeber
+
+
+# FIXME							# station duration condionally scaled by "water level"
+# Implement Water Level			if gv.sd['iw'][b] & 1 << s:
+#									duration_adj = 1.0
+#									duration = p[6] 
+#								else:
+#									duration_adj = gv.sd['wl'] / 100 * extra_adjustment
+#									duration = p[6] * duration_adj
+#									duration = int(round(duration)) # convert to int
+                            if gv.sd['seq']:  # sequential mode
+                                gv.rs[station][2] = duration
+                                gv.rs[station][3] = i + 1  # store program number for scheduling
+                                gv.ps[station][0] = i + 1  # store program number for display
+                                gv.ps[station][1] = duration
+                            else:  # concurrent mode
+                                # If duration is shortter than any already set for this station
+                                if duration < gv.rs[station][2]:
                                     continue
-
-            				# station duration condionally scaled by "water level"
-                                if gv.sd['iw'][b] & 1 << s:
-                                    duration_adj = 1.0
-                                    duration = p[6] 
                                 else:
-                                    duration_adj = gv.sd['wl'] / 100 * extra_adjustment
-                                    duration = p[6] * duration_adj
-                                    duration = int(round(duration)) # convert to int
-                                if p[7 + b] & 1 << s:  # if this station is scheduled in this program
-                                    if gv.sd['seq']:  # sequential mode
-                                        gv.rs[sid][2] = duration
-                                        gv.rs[sid][3] = i + 1  # store program number for scheduling
-                                        gv.ps[sid][0] = i + 1  # store program number for display
-                                        gv.ps[sid][1] = duration
-                                    else:  # concurrent mode
-                                        # If duration is shortter than any already set for this station
-                                        if duration < gv.rs[sid][2]:
-                                            continue
-                                        else:
-                                            gv.rs[sid][2] = duration
-                                            gv.rs[sid][3] = i + 1  # store program number
-                                            gv.ps[sid][0] = i + 1  # store program number for display
-                                            gv.ps[sid][1] = duration
-                        schedule_stations(p[7:7 + gv.sd['nbrd']])  # turns on gv.sd['bsy']
-
+                                    gv.rs[station][2] = duration
+                                    gv.rs[station][3] = i + 1  # store program number
+                                    gv.ps[station][0] = i + 1  # store program number for display
+                                    gv.ps[station][1] = duration
+                        schedule_stations(p[7])  # turns on gv.sd['bsy']
+#----v----- TODO continuar limpiando ------- v
         if gv.sd['bsy']:
             for b in range(gv.sd['nbrd']):  # Check each station once a second
                 for s in range(8):
@@ -196,7 +191,7 @@ if __name__ == '__main__':
     #########################################################
     #### Code to import all webpages and plugin webpages ####
 
-    import plugins
+    import plugins, controlPlugins
 
     try:
         print _('plugins loaded:')
@@ -224,13 +219,16 @@ if __name__ == '__main__':
         gv.plugin_menu.pop(gv.plugin_menu.index(['Manage Plugins', '/plugins']))
     except Exception:
         pass
-    
+    try:
+        import controlPlugins
+        print _('Station Control plugin:')
+    except Exception:
+        pass
+    print ' ', controlPlugins.__all__
+
+
     thread.start_new_thread(timing_loop, ())
-
-    if gv.use_gpio_pins:
-        set_output()    
-
-
+  
     app.notfound = lambda: web.seeother('/')
 
     app.run()

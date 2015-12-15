@@ -1,18 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
-import re
-import time
-import datetime
-import web
-import io
-import ast
-
-import gv
-from helpers import *
-from gpio_pins import set_output
-from sip import template_render
 from blinker import signal
+from gpio_pins import set_output
+from helpers import *
+from sip import template_render
 
 loggedin = signal('loggedin')
 def report_login():

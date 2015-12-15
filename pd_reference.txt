@@ -1,0 +1,21 @@
+#####
+# Documentation of the Program structure
+# Infered from programs.html and sip.py
+#
+#####
+
+pd[0] - Boolean : ON=1 OFF=0 # Enable or disable the program 
+pd[1] - Numeric - days    :  Define the days when the program should run 
+pd[2] - Numeric - interval  :  Define if its an interval program or not
+pd[3] - Numeric - Start Time 
+pd[4] - Numeric - End Time
+pd[5] - Numeric - Interval
+pd[6] - Numeric - Duration
+pd[7] - list - The list of stations that must be powered on
+               ex: [1, 3, 5, 6]
+OLD - pd[7] ... pd[n]- Numeric - Stations to power on Extension board 1 .... n-6 ****
+
+
+
+
+[1, 127, 0, 1140, 1200, 60, 1800, 3]

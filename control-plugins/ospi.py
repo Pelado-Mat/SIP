@@ -1,29 +1,37 @@
-from blinker import signal
-import web, json, time
-import gv  # Get access to sip's settings, gv = global variables
-from urls import urls  # Get access to sip's URLs
-from sip import template_render
-from webpages import ProtectedPage
+from controlBase import BaseControlPlugin
+import gv
+import gpio_pins
 
-params = []
+defaultParameters = {
+    'nbrd' = 1,
+    'nst_per_board'=8
+}
 
-# Read in the parameters for this plugin from it's JSON file
-def load_params():
-    global params
-    try:
-        with open('./data/ospi.json', 'r') as f:  # Read the settings from file
-            params = json.load(f)
-    except IOError: #  If file does not exist create file with defaults.
-        params = {
-            'nstations': 3,
-            'active': 'low'
-        }
-        with open('./data/ospi.json', 'w') as f:
-            json.dump(params, f)
-    return params
+class OspiControl(BaseControlPlugin):
+    def __init__(self):
+        super(OspiControl,self).__init__(defaultParameters)
+        self.nbrd = self.params['nbrd']
+        self.nst_per_board =  self.params['nst_per_board']
+        self.__stationState = [0] * (self.nbrd + 1) # list of bytes, one byte per board -0 off 1 on)
 
-load_params()
+    def stations(self):
+        """
+        Return a list of all the stations
+        @return:
+        """
+        return range(self.nbrd*self.nst_per_board)
 
+    def maxStations(self):
+        """
+        We supose that the board can turn on all stations at the same time
 
-nstations = 3
+        @return:
+            integer
+        """
+        return (self.nbrd*self.nst_per_board)
+
+    def runningStations(self):
+        rs = []
+        for board in self.sbits:
+
 

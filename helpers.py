@@ -1,25 +1,21 @@
 # -*- coding: utf-8 -*-
 
 
-import i18n
-
+import ast
 import datetime
-from threading import Thread
-import os
 import errno
+import io
+import os
 import random
+import subprocess
 import sys
 import time
-import subprocess
-import io
-import ast
-from web.webapi import seeother
-from blinker import signal
-
-import web
-from web import form
+from threading import Thread
 
 import gv
+import web
+from blinker import signal
+from web import form
 from web.session import sha1
 
 try:

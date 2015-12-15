@@ -8,8 +8,8 @@ import subprocess
 from threading import RLock
 
 major_ver = 3
-minor_ver = 1
-old_count = 648
+minor_ver = 2
+old_count = 0
 
 try:
     revision = int(subprocess.check_output(['git', 'rev-list', '--count', 'HEAD']))
@@ -43,7 +43,7 @@ try:
 except ImportError:
     use_pigpio = False
     
-# use_pigpio = False #  for tasting  
+# use_pigpio = False #  for testing  
 
 from helpers import password_salt, password_hash, load_programs, station_names
 
@@ -53,8 +53,7 @@ sd = {
     u"ir": [0],
     u"iw": [0],
     u"rsn": 0,
-    u"htp": 80,
-    u"nst": 8,
+    u"htp": 8080,
     u"rdst": 0,
     u"loc": u"",
     u"tz": 48,
@@ -79,17 +78,19 @@ sd = {
     u"rbt": 0,
     u"mtoff": 0,
     u"nprogs": 1,
-    u"nbrd": 1,
     u"tu": u"C",
     u"snlen": 32,
     u"name": u"SIP",
     u"theme": u"basic",
     u"show": [255],
     u"salt": password_salt(),
-    u"lang": u"default"
+    u"lang": u"default",
+    u"controlName": u"ospi"
 }
 
 sd['password'] = password_hash('opendoor', sd['salt'])
+
+scontrol = "" #Place holder for the Station Control Module
 
 try:
     with open('./data/sd.json', 'r') as sdf:  # A config file
@@ -107,27 +108,32 @@ now = timegm(nowt)
 tz_offset = int(time.time() - timegm(time.localtime())) # compatible with Javascript (negative tz shown as positive value)
 plugin_menu = []  # Empty list of lists for plugin links (e.g. ['name', 'URL'])
 
-srvals = [0] * (sd['nst'])  # Shift Register values
-output_srvals = [0] * (sd['nst'])  # Shift Register values last set by set_output()
+### FIXME
+#srvals = [0] * (sd['nst'])  # Shift Register values
+#output_srvals = [0] * (sd['nst'])  # Shift Register values last set by set_output()
 output_srvals_lock = RLock()
-rovals = [0] * sd['nbrd'] * 7  # Run Once durations
+
+#rovals = [0] * sd['nbrd'] * 7  # Run Once durations
 snames = station_names()  # Load station names from file
 pd = load_programs()  # Load program data from file
 plugin_data = {}  # Empty dictionary to hold plugin based global data
 ps = []  # Program schedule (used for UI display)
-for i in range(sd['nst']):
-    ps.append([0, 0])
+#for i in range(sd['nst']):
+#    ps.append([0, 0])
 
 pon = None  # Program on (Holds program number of a running program)
-sbits = [0] * (sd['nbrd'] + 1)  # Used to display stations that are on in UI
+#sbits = [0] * (sd['nbrd'] + 1)  # Used to display stations that are on in UI
 
 rs = []  # run schedule
-for j in range(sd['nst']):
-    rs.append([0, 0, 0, 0])  # scheduled start time, scheduled stop time, duration, program index
+#for j in range(sd['nst']):
+#   rs.append([0, 0, 0, 0])  # scheduled start time, scheduled stop time, duration, program index
+######
 
 lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
 scount = 0  # Station count, used in set station to track on stations with master association.
+
 use_gpio_pins = True
+
 
 options = [
     [_("System name"), "string", "name", _("Unique name of this SIP system."), _("System")],
@@ -142,7 +148,7 @@ options = [
     [_("New password"), "password", "npw", _("Enter a new password."), _("Change Password")],
     [_("Confirm password"), "password", "cpw", _("Confirm the new password."), _("Change Password")],
     [_("Sequential"), "boolean", "seq", _("Sequential or concurrent running mode."), _("Station Handling")],
-    [_("Extension boards"), "int", "nbrd", _("Number of extension boards."), _("Station Handling")],
+    [_("Control Plugin"), "list", "control", _("Name of the Control Plugin who would command the stations."), _("Station Handling")],
     [_("Station delay"), "int", "sdt", _("Station delay time (in seconds), between 0 and 240."), _("Station Handling")],
     [_("Master station"), "int", "mas",_( "Select master station."), _("Configure Master")],
     [_("Master on adjust"), "int", "mton", _("Master on delay (in seconds), between +0 and +60."), _("Configure Master")],
