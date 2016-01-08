@@ -5,7 +5,7 @@ An improved Python port of the Arduino based OpenSprinkler firmware, originally 
 
 This fork attempt to encapsulate the control logic from the main program in plugins, to enable a simpler way to implement diferent HW configurations. 
 
-My driver is the need to program a irrigation from a tank, in a rural enviroment. I must control a pump, 12 valves and be sure that our tank has water.
+My driver is the need to program a irrigation from a pond, in a rural enviroment. I must control a pump, 16 valves and be sure that our tank has water.
 
 I will be using a [simple water level sensor from ICS](http://www.icstation.com/icstation-water-level-sensor-module-arduino-stm32-p-3258.html) to shutdown everything if we reach the desired water level.
 To control the valves I'm planning to use a couple of relays with the [relay_board plugin](https://github.com/KanyonKris/relay_board)
