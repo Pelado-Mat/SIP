@@ -4,6 +4,7 @@
 #####################################################################
 # Control Class to support the OSI HW,                              #
 # Mainly using the gpio_pins logic                                  #
+# MV: I do not have OSPI HW!!! UNTESTED!
 #
 #####################################################################
 from controlBase import BaseControlPlugin
@@ -17,16 +18,17 @@ except ImportError:
         print 'No GPIO module was loaded from GPIO Pins module'
 
 
-class OspiControl(BaseControlPlugin):
+class OspyBoardControl(BaseControlPlugin):
 
     def __init__(self):
         defParams = self.__autoconfigure_parms()
         print defParams
-        super(OspiControl, self).__init__(defParams)
-        print self.__dict__
+        super(BoardControl, self).__init__(defParams)
         # Parameters
         self.nbrd = self.params['nbrd']
-        self.maxStations = self.params['maxStations']
+        self.maxOnStations = self.params['maxOnStations']
+
+        # Private
         self.__nst_per_board = self.params['nst_per_board']
         self.__platform = self.params['platform']
         self.__pin_map = self.params['pin_map']
@@ -61,7 +63,7 @@ class OspiControl(BaseControlPlugin):
         defaultParameters = {
         'nbrd': 1,
         'nst_per_board': 8,
-        'maxStations': 5,
+        'maxOnStations': 5,
         'platform': '',  # Autodected on first run "pi" for RaspBerry | "bo" for Beagle Bone Black
         'pin_map': [],  # Autodected on first run
         'pin_rain_sense': 1,  # Autodected on first run
@@ -242,7 +244,7 @@ class OspiControl(BaseControlPlugin):
         if len(newStationState) != len(self.__stationState):
             raise NameError("ERROR: The number of stations is not equal")
 
-        with self.__lock:
+        with self.lock:
             if GPIO:
                 self.__disableShiftRegisterOutput()
                 self.__setShiftRegister(newStationState)
@@ -251,3 +253,8 @@ class OspiControl(BaseControlPlugin):
             else:
                 print "GPIO not defined, cannot change the stations!"
         return self.__stationState
+
+
+
+import gv
+gv.scontrol = OspyBoardControl()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from blinker import signal
-from gpio_pins import set_output
+
 from helpers import *
 from sip import template_render
 

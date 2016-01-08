@@ -7,6 +7,7 @@
 import subprocess
 from threading import RLock
 
+
 major_ver = 3
 minor_ver = 2
 old_count = 0
@@ -85,12 +86,14 @@ sd = {
     u"show": [255],
     u"salt": password_salt(),
     u"lang": u"default",
-    u"controlName": u"ospi"
+    u"controlName": u"relayBoard",
+    u"nbrd" : 1, # FIXME! must be replaced with the proper call to ControlPlugin
+    u'nst' : 8
 }
 
 sd['password'] = password_hash('opendoor', sd['salt'])
 
-scontrol = "" #Place holder for the Station Control Module
+scontrol = None #Place holder for the Station Control Module
 
 try:
     with open('./data/sd.json', 'r') as sdf:  # A config file
@@ -98,6 +101,11 @@ try:
     for key in sd:  # If file loaded, replce default values in sd with values from file
         if key in sd_temp:
             sd[key] = sd_temp[key]
+    # FIXME! Just a Hack!
+#    sd['nbrd'] = int(float(scontrol.nStations) / 8) + (21 % 8 > 0)
+ #   sd['nst'] = scontrol.nStations
+    print sd
+
 except IOError:  # If file does not exist, it will be created using defaults.
     with open('./data/sd.json', 'w') as sdf:  # save file
         json.dump(sd, sdf)
@@ -109,28 +117,27 @@ tz_offset = int(time.time() - timegm(time.localtime())) # compatible with Javasc
 plugin_menu = []  # Empty list of lists for plugin links (e.g. ['name', 'URL'])
 
 ### FIXME
-#srvals = [0] * (sd['nst'])  # Shift Register values
+srvals = [0] * (sd['nst'])  # Shift Register values
 #output_srvals = [0] * (sd['nst'])  # Shift Register values last set by set_output()
-#output_srvals_lock = RLock()
+output_srvals_lock = RLock()
 
-#rovals = [0] * sd['nbrd'] * 7  # Run Once durations
+rovals = [0] * sd['nbrd'] * 7  # Run Once durations
 snames = station_names()  # Load station names from file
 pd = load_programs()  # Load program data from file
 plugin_data = {}  # Empty dictionary to hold plugin based global data
 ps = []  # Program schedule (used for UI display)
-#for i in range(sd['nst']):
-#    ps.append([0, 0])
+for i in range(sd['nst']):
+    ps.append([0, 0])
 
 pon = None  # Program on (Holds program number of a running program)
-#sbits = [0] * (sd['nbrd'] + 1)  # Used to display stations that are on in UI
+sbits = [0] * (sd['nbrd'] + 1)  # Used to display stations that are on in UI
 
 rs = []  # run schedule
-#for j in range(sd['nst']):
-#   rs.append([0, 0, 0, 0])  # scheduled start time, scheduled stop time, duration, program index
-######
+for j in range(sd['nst']):
+   rs.append([0, 0, 0, 0])  # scheduled start time, scheduled stop time, duration, program index
 
 lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
-#scount = 0  # Station count, used in set station to track on stations with master association.
+scount = 0  # Station count, used in set station to track on stations with master association.
 
 #use_gpio_pins = True
 
@@ -148,7 +155,7 @@ options = [
     [_("New password"), "password", "npw", _("Enter a new password."), _("Change Password")],
     [_("Confirm password"), "password", "cpw", _("Confirm the new password."), _("Change Password")],
     [_("Sequential"), "boolean", "seq", _("Sequential or concurrent running mode."), _("Station Handling")],
-    [_("Control Plugin"), "list", "control", _("Name of the Control Plugin who would command the stations."), _("Station Handling")],
+    [_("Extension boards"), "int", "nbrd", _("Number of extension boards."), _("Station Handling")],
     [_("Station delay"), "int", "sdt", _("Station delay time (in seconds), between 0 and 240."), _("Station Handling")],
     [_("Master station"), "int", "mas",_( "Select master station."), _("Configure Master")],
     [_("Master on adjust"), "int", "mton", _("Master on delay (in seconds), between +0 and +60."), _("Configure Master")],
@@ -158,3 +165,4 @@ options = [
     [_("Enable logging"), "boolean", "lg", _("Log all events - note that repetitive writing to an SD card can shorten its lifespan."), _("Logging")],
     [_("Max log entries"), "int", "lr", _("Length of log to keep, 0=no limits."), _("Logging")]
 ]
+

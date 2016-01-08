@@ -9,6 +9,7 @@ import json
 import os
 import threading
 
+
 # Thanks Stack Overflow (http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python)
 # https://gist.github.com/werediver/4396488
 
@@ -24,7 +25,9 @@ class _Singleton(type):
                     cls.__instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls.__instances[cls]
 
+
 class Singleton(_Singleton('SingletonMeta', (object,), {})): pass
+
 
 class SingletonMixin(object):
     __singleton_lock = threading.Lock()
@@ -44,7 +47,6 @@ class BaseControlPlugin(Singleton):
     Base Class to implement Control Plugins interfaces
     """
 
-
     def __init__(self, defaultParameters={}):
         """
         Construct a new Control Plugin object.
@@ -52,22 +54,22 @@ class BaseControlPlugin(Singleton):
             dictionary with the default options that the plugin must use
         :return: returns nothing
         """
-        self.__lock=threading.RLock()
+        self.lock = threading.RLock()
         self.__params = self.load_params(defaultParameters)
-        self.maxStations = 5 # Max Numer of stations that can be powered at the same time.
-        self.__stationState = [] # list of one byte per station, 1 = turn on, 0 = turn off
-        
+        self.__maxOnStations = 5  # Max Numer of stations that can be powered at the same time.
+        self.__stationState = []  # list of one byte per station, 1 = turn on, 0 = turn off
+
     def load_params(self, defaultParameters):
-        paramFile = os.path.join(".", "data", self.__class__.__name__) +".json"
+        paramFile = os.path.join(".", "data", self.__class__.__name__) + ".json"
         try:
             with open(paramFile, 'r') as f:  # Read the settings from file
                 params = json.load(f)
-        except IOError: #  If file does not exist create file with defaults.
+        except IOError:  # If file does not exist create file with defaults.
             if len(defaultParameters.keys()) == 0:
                 raise NameError('No default nor json file: ' + paramFile)
             params = defaultParameters
             with open(paramFile, 'w') as f:
-                json.dump(params,f)
+                json.dump(params, f)
         return params
 
     @property
@@ -78,33 +80,33 @@ class BaseControlPlugin(Singleton):
     def params(self, parameters):
         # TODO: Add some simple validations
         self.__params = parameters
-        return self.__params
+
 
     @property
     def stations(self):
         """
         Return the list of stations available and the current State
         """
-        with self.__lock:
+        with self.lock:
             return self.__stationState
 
     @stations.setter
     def stations(self, newStationsState):
         raise NameError('Must be implemented in the derived class')
 
-
-    def maxStations(self):
+    @property
+    def maxOnStations(self):
         """
         Return the maximun number of stations
         that can be on at the same time
         """
-        return self.__maxStations
+        return self.__maxOnStations
 
     def runningStations(self):
         """
         Return a list of the running stations
         """
-        return [i for i,x in enumerate(self.stations) if x == 1]
+        return [i for i, x in enumerate(self.stations) if x == 1]
 
     def rainSense(self):
         """
@@ -113,10 +115,10 @@ class BaseControlPlugin(Singleton):
         """
         return False
 
-
     def stopStations(self):
         """
         Stop all stations
         if the list is empty, stop all stations
         """
-        return self.stations([0] * len(self.__stationState))
+        self.stations = ([0] * len(self.__stationState))
+        return  self.stations

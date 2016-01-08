@@ -18,6 +18,8 @@ from blinker import signal
 from web import form
 from web.session import sha1
 
+"""
+FIXME!!!!
 try:
     from gpio_pins import GPIO, pin_rain_sense, pin_relay
     if gv.use_pigpio:
@@ -26,7 +28,7 @@ try:
 except ImportError:
     print 'error importing GPIO pins into helpers'
     pass
-
+"""
 try:
     import json
 except ImportError:
@@ -35,6 +37,12 @@ except ImportError:
     except ImportError:
         print _("Error: json module not found")
         sys.exit()
+
+def set_output():
+    """
+     FIXME: Just a dummy function must be replaced
+    """
+    gv.scontrol.stations = gv.srvals
 
 
 ##############################
@@ -58,7 +66,6 @@ def reboot(wait=1, block=False):
         Set to True at start of thread (recursive).
     """
     if block:
-        from gpio_pins import set_output
         gv.srvals = [0] * (gv.sd['nst'])
         set_output()
         if gv.use_pigpio:
@@ -87,7 +94,6 @@ def poweroff(wait=1, block=False):
         Set to True at start of thread (recursive).
     """
     if block:
-        from gpio_pins import set_output
         gv.srvals = [0] * (gv.sd['nst'])
         set_output()
         if gv.use_pigpio:
@@ -117,7 +123,6 @@ def restart(wait=1, block=False):
     """
     if block:
         report_restart()
-        from gpio_pins import set_output
         gv.srvals = [0] * (gv.sd['nst'])
         set_output()
         if gv.use_pigpio:
@@ -229,7 +234,7 @@ def clear_mm():
     """
     Clear manual mode settings and stop any running zones.
     """
-    from gpio_pins import set_output
+
     if gv.sd['mm']:
         gv.sbits = [0] * (gv.sd['nbrd'] + 1)
         gv.ps = []
@@ -410,7 +415,7 @@ def stop_onrain():
     Stop stations that do not ignore rain.
     """
 
-    from gpio_pins import set_output
+
     do_set_output = False
     for b in range(gv.sd['nbrd']):
         for s in range(8):
@@ -433,7 +438,7 @@ def stop_stations():
     """
     Stop all running stations, clear schedules.
     """
-    from gpio_pins import set_output
+
     gv.srvals = [0] * (gv.sd['nst'])
     set_output()
     gv.ps = []

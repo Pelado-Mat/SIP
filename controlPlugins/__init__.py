@@ -22,8 +22,8 @@ __all__ = []
 
 module = gv.sd['controlName']
 try:
-	gv.scontrol = __import__(__name__+'.'+module)
-	__all__ = module
+    controlPlugin = __import__(__name__+'.'+module)
+    __all__ = module
 except Exception as e:
-	print 'Ignoring exception while loading the {} plug-in.'.format(module)
+    print 'Ignoring exception while loading the {} plug-in.'.format(module)
     print e  # Provide feedback for plugin development
