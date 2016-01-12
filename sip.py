@@ -8,6 +8,9 @@ import time
 import thread
 from calendar import timegm
 import sys
+import subprocess
+import json
+import imp
 
 sys.path.append('./plugins')
 sys.path.append('./controlPlugins' )
@@ -15,10 +18,75 @@ sys.path.append('./controlPlugins' )
 import web  # the Web.py module. See webpy.org (Enables the Python SIP web interface)
 
 import gv
-from helpers import plugin_adjustment, prog_match, schedule_stations, log_run, stop_onrain, check_rain, jsave, station_names, get_rpi_revision, set_output
+from helpers import load_programs, password_hash, plugin_adjustment, prog_match, schedule_stations, log_run, stop_onrain, check_rain, jsave, station_names, get_rpi_revision, set_output
 from urls import urls  # Provides access to URLs for UI pages
 from ReverseProxied import ReverseProxied
 
+
+def gv_init():
+    '''
+    Initialize the Global Variables
+    @return:
+    '''
+    try:
+        gv.revision = int(subprocess.check_output(['git', 'rev-list', '--count', 'HEAD']))
+        gv.ver_str = '%d.%d.%d' % (gv.major_ver, gv.minor_ver, (gv.revision - gv.old_count))
+    except Exception:
+        print _('Could not use git to determine version!')
+        gv.revision = 999
+        gv.ver_str = '%d.%d.%d' % (gv.major_ver, gv.minor_ver, gv.revision)
+
+    try:
+        gv.ver_date = subprocess.check_output(['git', 'log', '-1', '--format=%cd', '--date=short']).strip()
+    except Exception:
+        print _('Could not use git to determine date of last commit!')
+        gv.ver_date = '2015-01-09'
+
+    gv.sd['password'] = password_hash('opendoor', gv.sd['salt'])
+
+    try:
+        with open('./data/sd.json', 'r') as sdf:  # A config file
+            sd_temp = json.load(sdf)
+        for key in gv.sd:  # If file loaded, replace default values in sd with values from file
+            if key in sd_temp:
+                gv.sd[key] = sd_temp[key]
+
+    except IOError:  # If file does not exist, it will be created using defaults.
+        with open('./data/sd.json', 'w') as sdf:  # save file
+            json.dump(gv.sd, sdf)
+
+    # Load the Control Plugin Module
+    __import__(gv.sd['controlName'])
+
+    gv.nowt = time.localtime()
+    gv.now = timegm(gv.nowt)
+    gv.tz_offset = int(time.time() - timegm(time.localtime())) # compatible with Javascript (negative tz shown as positive value)
+    gv.plugin_menu = []  # Empty list of lists for plugin links (e.g. ['name', 'URL'])
+    gv.srvals = [0] * len(gv.scontrol.stations)  # Shift Register values
+
+    #TODO: Replace nbrd madness
+    gv.sd['nbrd'] = int(gv.scontrol.nStations / 8) + (gv.scontrol.nStations % 8 > 0 )
+
+    #TODO: Replace nst
+    gv.sd['nst'] = gv.scontrol.nStations
+
+    gv.rovals = [0] * gv.sd['nbrd'] * 7  # Run Once durations
+    gv.snames = station_names()  # Load station names from file
+    gv.pd = load_programs()  # Load program data from file
+    gv.plugin_data = {}  # Empty dictionary to hold plugin based global data
+    gv.ps = []  # Program schedule (used for UI display)
+    for i in range(gv.sd['nst']):
+        gv.ps.append([0, 0])
+
+    gv.pon = None  # Program on (Holds program number of a running program)
+    gv.sbits = [0] * (gv.sd['nbrd'] + 1)  # Used to display stations that are on in UI
+
+    gv.rs = []  # run schedule
+    for j in range(gv.sd['nst']):
+       gv.rs.append([0, 0, 0, 0])  # scheduled start time, scheduled stop time, duration, program index
+
+    gv.lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
+    gv.scount = 0  # Station count, used in set station to track on stations with master association.
 
 
 def timing_loop():
@@ -195,7 +263,11 @@ if __name__ == '__main__':
     #########################################################
     #### Code to import all webpages and plugin webpages ####
 
-    import plugins, controlPlugins
+    import gv
+    gv_init()
+
+    import plugins
+
 
     try:
         print _('plugins loaded:')
@@ -203,6 +275,7 @@ if __name__ == '__main__':
         pass
     for name in plugins.__all__:
         print ' ', name
+
 
     gv.plugin_menu.sort(key=lambda entry: entry[0])
 
@@ -223,12 +296,15 @@ if __name__ == '__main__':
         gv.plugin_menu.pop(gv.plugin_menu.index(['Manage Plugins', '/plugins']))
     except Exception:
         pass
-    try:
-        import controlPlugins
-        print _('Station Control plugin:')
-    except Exception:
-        pass
-    print ' ', controlPlugins.__all__
+    print _('Station Control plugin:')
+    print ' ', gv.scontrol.__class__.__name__
+
+    #try:
+    #    import controlPlugins
+    #    print _('Station Control plugin:')
+    #except Exception:
+    #    pass
+    #print ' ', controlPlugins.__all__
 
 
     thread.start_new_thread(timing_loop, ())
