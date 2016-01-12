@@ -55,9 +55,9 @@ class BaseControlPlugin(Singleton):
         :return: returns nothing
         """
         self.lock = threading.RLock()
-        self.__params = self.load_params(defaultParameters)
-        self.__maxOnStations = 5  # Max Numer of stations that can be powered at the same time.
-        self.__stationState = []  # list of one byte per station, 1 = turn on, 0 = turn off
+        self._params = self.load_params(defaultParameters)
+        self._maxOnStations = 5  # Max Numer of stations that can be powered at the same time.
+        self._stationState = []  # list of one byte per station, 1 = turn on, 0 = turn off
 
     def load_params(self, defaultParameters):
         paramFile = os.path.join(".", "data", self.__class__.__name__) + ".json"
@@ -74,12 +74,12 @@ class BaseControlPlugin(Singleton):
 
     @property
     def params(self):
-        return self.__params
+        return self._params
 
     @params.setter
     def params(self, parameters):
         # TODO: Add some simple validations
-        self.__params = parameters
+        self._params = parameters
 
 
     @property
@@ -88,7 +88,7 @@ class BaseControlPlugin(Singleton):
         Return the list of stations available and the current State
         """
         with self.lock:
-            return self.__stationState
+            return self._stationState
 
     @stations.setter
     def stations(self, newStationsState):
@@ -100,7 +100,7 @@ class BaseControlPlugin(Singleton):
         Return the maximun number of stations
         that can be on at the same time
         """
-        return self.__maxOnStations
+        return self._maxOnStations
 
     def runningStations(self):
         """
@@ -120,5 +120,5 @@ class BaseControlPlugin(Singleton):
         Stop all stations
         if the list is empty, stop all stations
         """
-        self.stations = ([0] * len(self.__stationState))
+        self.stations = ([0] * len(self._stationState))
         return  self.stations

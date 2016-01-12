@@ -37,7 +37,7 @@ class OspyBoardControl(BaseControlPlugin):
         self.__pin_sr = self.params['pin_sr']
         self.__pi = None
         # Internal State
-        self.__stationState = [0] * (self.nbrd * self.__nst_per_board)
+        self._stationState = [0] * (self.nbrd * self.__nst_per_board)
 
         try:
             import pigpio
@@ -205,7 +205,7 @@ class OspyBoardControl(BaseControlPlugin):
 
     def __setShiftRegister(self, newStationState):
         """Set the state of each output pin on the shift register from the srvals list."""
-        nst = len(self.__stationState)
+        nst = len(self._stationState)
         srvals = newStationState
         try:
             if self.__pi:
@@ -241,7 +241,7 @@ class OspyBoardControl(BaseControlPlugin):
         @return:
             [] - the new station State
         """
-        if len(newStationState) != len(self.__stationState):
+        if len(newStationState) != len(self._stationState):
             raise NameError("ERROR: The number of stations is not equal")
 
         with self.lock:
@@ -249,10 +249,10 @@ class OspyBoardControl(BaseControlPlugin):
                 self.__disableShiftRegisterOutput()
                 self.__setShiftRegister(newStationState)
                 self.__enableShiftRegisterOutput()
-                self.__stationState = newStationState
+                self._stationState = newStationState
             else:
                 print "GPIO not defined, cannot change the stations!"
-        return self.__stationState
+        return self._stationState
 
 
 

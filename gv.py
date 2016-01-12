@@ -104,7 +104,7 @@ try:
     # FIXME! Just a Hack!
 #    sd['nbrd'] = int(float(scontrol.nStations) / 8) + (21 % 8 > 0)
  #   sd['nst'] = scontrol.nStations
-    print sd
+
 
 except IOError:  # If file does not exist, it will be created using defaults.
     with open('./data/sd.json', 'w') as sdf:  # save file

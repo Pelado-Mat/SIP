@@ -30,15 +30,15 @@ class RelayBoardControl(BaseControlPlugin):
         super(RelayBoardControl, self).__init__(defParams)
         # Parameters
         self.nStations = self.params['nStations']
-        self.__relay_pins = self.params['relay_pins']
-        self.__platform = self.params['platform']
-        self.__pin_map = self.params['pin_map']
-        self.__pin_rain_sense = self.params['pin_rain_sense']
-        self.__pin_relay = self.params['pin_relay']
-        self.__active = self.params['active']
+        self._relay_pins = self.params['relay_pins']
+        self._platform = self.params['platform']
+        self._pin_map = self.params['pin_map']
+        self._pin_rain_sense = self.params['pin_rain_sense']
+        self._pin_relay = self.params['pin_relay']
+        self._active = self.params['active']
 
         # Internal State
-        self.__stationState = [0] * (self.nStations)
+        self._stationState = [0] * (self.nStations)
 
 
         if use_pigpio:
@@ -60,10 +60,10 @@ class RelayBoardControl(BaseControlPlugin):
             'maxOnStations': 5,
             'platform': 'pi',
             'pin_map': [],  # Autodected on first run
-            'relay_pins': [7, 8, 10, 11, 12, 13, 16, 15],  # Pins Conected with the relays.
-            'pin_rain_sense': 1,  # Autodected on first run
-            'pin_relay': 1,  # Autodected on first run
-            'active': 'low'
+            'relay_pins': [11,12,13,15,16,18,22,7,3,5,24,26],  # Pins Conected with the relays - relay_board default
+            'pin_rain_sense': 8,  # Autodected on first run - relay_board default
+            'pin_relay': 10,  # Autodected on first run - relay_board default
+            'active': 'high'
         }
 
         try:
@@ -150,23 +150,23 @@ class RelayBoardControl(BaseControlPlugin):
         except ImportError:
             use_pigpio = False
         try:
-            for i in range(len(self.__relay_pins)):
+            for i in range(len(self._relay_pins)):
                 time.sleep(0.1)
                 if use_pigpio:
-                    self__pi.set_mode(self.__pin_map[i], pigpio.OUTPUT)
+                    self__pi.set_mode(self._pin_map[i], pigpio.OUTPUT)
                 else:
-                    GPIO.setup(self.__relay_pins[i], GPIO.OUT)
+                    GPIO.setup(self._relay_pins[i], GPIO.OUT)
 
-                if self.__active == 'low':
+                if self._active == 'low':
                     if use_pigpio:
-                        self__pi.write(self.__relay_pins[i], 1)
+                        self__pi.write(self._relay_pins[i], 1)
                     else:
-                        GPIO.output(self.__relay_pins[i], GPIO.HIGH)
+                        GPIO.output(self._relay_pins[i], GPIO.HIGH)
                 else:
                     if use_pigpio:
-                        self__pi.write(self.__relay_pins[i], 0)
+                        self__pi.write(self._relay_pins[i], 0)
                     else:
-                        GPIO.output(self.__relay_pins[i], GPIO.LOW)
+                        GPIO.output(self._relay_pins[i], GPIO.LOW)
         except:
             print "Problems seting pins!!"
             pass
@@ -179,40 +179,41 @@ class RelayBoardControl(BaseControlPlugin):
         @return:
             [] - the new station State
         """
-        if len(newStationState) != len(self.__stationState):
+        if len(newStationState) != len(self._stationState):
             raise NameError("ERROR: The number of stations is not equal")
 
-        with self.lock :
+        with self.lock:
             for i in range(self.nStations):
                 try:
                     if gv.srvals[i]:  # if station is set to on
-                        if self.__active == 'low':  # if the relay type is active low, set the output low
+                        if self._active == 'low':  # if the relay type is active low, set the output low
                             if gv.use_pigpio:
-                                pi.write(self.__relay_pins[i], 0)
+                                pi.write(self._relay_pins[i], 0)
                             else:
-                                GPIO.output(self.__relay_pins[i], GPIO.LOW)
+                                GPIO.output(self._relay_pins[i], GPIO.LOW)
                         else:  # otherwise set it high
                             if gv.use_pigpio:
-                                pi.write(self.__relay_pins[i], 1)
+                                pi.write(self._relay_pins[i], 1)
                             else:
-                                GPIO.output(self.__relay_pins[i], GPIO.HIGH)
+                                GPIO.output(self._relay_pins[i], GPIO.HIGH)
                                 #                    print 'relay switched on', i + 1, "pin", relay_pins[i]  #  for testing #############
                     else:  # station is set to off
-                        if self.__active == 'low':  # if the relay type is active low, set the output high
+                        if self._active == 'low':  # if the relay type is active low, set the output high
                             if gv.use_pigpio:
-                                pi.write(self.__relay_pins[i], 1)
+                                pi.write(self._relay_pins[i], 1)
                             else:
-                                GPIO.output(self.__relay_pins[i], GPIO.HIGH)
+                                GPIO.output(self._relay_pins[i], GPIO.HIGH)
                         else:  # otherwise set it low
                             if gv.use_pigpio:
-                                pi.write(self.__relay_pins[i], 0)
+                                pi.write(self._relay_pins[i], 0)
                             else:
-                                GPIO.output(self.__relay_pins[i], GPIO.LOW)
+                                GPIO.output(self._relay_pins[i], GPIO.LOW)
                                 #                    print 'relay switched off', i + 1, "pin", relay_pins[i]  #  for testing ############
                 except Exception, e:
-                    print "Problem switching relays", e, self.__relay_pins[i]
+                    print "Problem switching relays", e, self._relay_pins[i]
                     pass
-        return self.__stationState
+        self._stationState = newStationState
+        return self._stationState
 
 
 import gv
