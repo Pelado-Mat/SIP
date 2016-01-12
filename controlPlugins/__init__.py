@@ -21,6 +21,11 @@ os_name = os.name
 __all__ = []
 
 module = gv.sd['controlName']
+
+# For Debugging
+#controlPlugin = __import__(__name__+'.'+module)
+#__all__ = module
+
 try:
     controlPlugin = __import__(__name__+'.'+module)
     __all__ = module

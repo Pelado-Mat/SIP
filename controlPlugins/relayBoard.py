@@ -36,7 +36,7 @@ class RelayBoardControl(BaseControlPlugin):
         self._pin_rain_sense = self.params['pin_rain_sense']
         self._pin_relay = self.params['pin_relay']
         self._active = self.params['active']
-
+        self._pi = None
         # Internal State
         self._stationState = [0] * (self.nStations)
 

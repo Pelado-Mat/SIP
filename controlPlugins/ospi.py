@@ -18,26 +18,26 @@ except ImportError:
         print 'No GPIO module was loaded from GPIO Pins module'
 
 
-class OspyBoardControl(BaseControlPlugin):
+class OspiBoardControl(BaseControlPlugin):
 
     def __init__(self):
         defParams = self.__autoconfigure_parms()
-        print defParams
-        super(BoardControl, self).__init__(defParams)
+        super(OspiBoardControl, self).__init__(defParams)
         # Parameters
-        self.nbrd = self.params['nbrd']
-        self.maxOnStations = self.params['maxOnStations']
+        self.nStations = self.params['nStations']
+        self.nbrd = int(self.params['nStations'] / self.params['nst_per_board']) + (self.params['nStations'] & self.params['nst_per_board'] > 0 )
+        self._maxOnStations = self.params['maxOnStations']
 
         # Private
-        self.__nst_per_board = self.params['nst_per_board']
-        self.__platform = self.params['platform']
-        self.__pin_map = self.params['pin_map']
-        self.__pin_rain_sense = self.params['pin_rain_sense']
-        self.__pin_relay = self.params['pin_relay']
-        self.__pin_sr = self.params['pin_sr']
-        self.__pi = None
+        self._nst_per_board = self.params['nst_per_board']
+        self._platform = self.params['platform']
+        self._pin_map = self.params['pin_map']
+        self._pin_rain_sense = self.params['pin_rain_sense']
+        self._pin_relay = self.params['pin_relay']
+        self._pin_sr = self.params['pin_sr']
+        self._pi = None
         # Internal State
-        self._stationState = [0] * (self.nbrd * self.__nst_per_board)
+        self._stationState = [0] * (self.nStations)
 
         try:
             import pigpio
@@ -46,7 +46,7 @@ class OspyBoardControl(BaseControlPlugin):
             use_pigpio = False
 
         if use_pigpio:
-            self.__pi = pigpio.pi()
+            self._pi = pigpio.pi()
         else:
             if GPIO:
                 GPIO.setwarnings(False)
@@ -61,13 +61,13 @@ class OspyBoardControl(BaseControlPlugin):
     def __autoconfigure_parms(self):
 
         defaultParameters = {
-        'nbrd': 1,
+        'nStations': 8,
         'nst_per_board': 8,
         'maxOnStations': 5,
         'platform': '',  # Autodected on first run "pi" for RaspBerry | "bo" for Beagle Bone Black
         'pin_map': [],  # Autodected on first run
-        'pin_rain_sense': 1,  # Autodected on first run
-        'pin_relay': 1,  # Autodected on first run
+        'pin_rain_sense': 8,  # Autodected on first run
+        'pin_relay': 10,  # Autodected on first run
         'pin_sr': {'dat': 1, 'clk': 1, 'noe': 1, 'lat': 1}  # Autodected on first run
         }
 
@@ -156,50 +156,50 @@ class OspyBoardControl(BaseControlPlugin):
         Define and setup GPIO pins for shift register operation
         @return:
         """
-        if self.__pi:
+        if self._pi:
             # GPIO
-            self.__pi.set_mode(self.__pin_sr['noe'], pigpio.OUTPUT)
-            self.__pi.set_mode(self.__pin_sr['clk'], pigpio.OUTPUT)
-            self.__pi.set_mode(self.__pin_sr['dat'], pigpio.OUTPUT)
-            self.__pi.set_mode(self.__pin_sr['lat'], pigpio.OUTPUT)
-            self.__pi.write(self.__pin_sr['noe'], 1)
-            self.__pi.write(self.__pin_sr['clk'], 0)
-            self.__pi.write(self.__pin_sr['dat'], 0)
-            self.__pi.write(self.__pin_sr['lat'], 0)
+            self._pi.set_mode(self._pin_sr['noe'], pigpio.OUTPUT)
+            self._pi.set_mode(self._pin_sr['clk'], pigpio.OUTPUT)
+            self._pi.set_mode(self._pin_sr['dat'], pigpio.OUTPUT)
+            self._pi.set_mode(self._pin_sr['lat'], pigpio.OUTPUT)
+            self._pi.write(self._pin_sr['noe'], 1)
+            self._pi.write(self._pin_sr['clk'], 0)
+            self._pi.write(self._pin_sr['dat'], 0)
+            self._pi.write(self._pin_sr['lat'], 0)
             # Rain Sensor
-            self.__pi.set_mode(self.__pin_rain_sense, pigpio.INPUT)
-            self.__pi.set_mode(self.__pin_relay, pigpio.OUTPUT)
+            self._pi.set_mode(self._pin_rain_sense, pigpio.INPUT)
+            self._pi.set_mode(self._pin_relay, pigpio.OUTPUT)
         else:
             # GPIO
-            GPIO.setup(self.__pin_sr['noe'], GPIO.OUT)
-            GPIO.setup(self.__pin_sr['clk'], GPIO.OUT)
-            GPIO.setup(self.__pin_sr['dat'], GPIO.OUT)
-            GPIO.setup(self.__pin_sr['lat'], GPIO.OUT)
-            GPIO.output(self.__pin_sr['noe'], GPIO.HIGH)
-            GPIO.output(self.__pin_sr['clk'], GPIO.LOW)
-            GPIO.output(self.__pin_sr['dat'], GPIO.LOW)
-            GPIO.output(self.__pin_sr['lat'], GPIO.LOW)
+            GPIO.setup(self._pin_sr['noe'], GPIO.OUT)
+            GPIO.setup(self._pin_sr['clk'], GPIO.OUT)
+            GPIO.setup(self._pin_sr['dat'], GPIO.OUT)
+            GPIO.setup(self._pin_sr['lat'], GPIO.OUT)
+            GPIO.output(self._pin_sr['noe'], GPIO.HIGH)
+            GPIO.output(self._pin_sr['clk'], GPIO.LOW)
+            GPIO.output(self._pin_sr['dat'], GPIO.LOW)
+            GPIO.output(self._pin_sr['lat'], GPIO.LOW)
             # Rain Sensor
-            GPIO.setup(self.__pin_rain_sense, GPIO.IN)
-            GPIO.setup(self.__pin_relay, GPIO.OUT)
+            GPIO.setup(self._pin_rain_sense, GPIO.IN)
+            GPIO.setup(self._pin_relay, GPIO.OUT)
 
     def __disableShiftRegisterOutput(self):
         """Disable output from shift register."""
         try:
-            if self.__pi:
-                pi.write(self.__pin_sr['noe'], 1)
+            if self._pi:
+                pi.write(self._pin_sr['noe'], 1)
             else:
-                GPIO.output(self.__pin_sr['noe'], GPIO.HIGH)
+                GPIO.output(self._pin_sr['noe'], GPIO.HIGH)
         except Exception:
             pass
 
     def __enableShiftRegisterOutput(self):
         """Enable output from shift register."""
         try:
-            if self.__pi:
-                self.__pi.write(self.__pin_sr['noe'], 0)
+            if self._pi:
+                self._pi.write(self._pin_sr['noe'], 0)
             else:
-                GPIO.output(self.__pin_sr['noe'], GPIO.LOW)
+                GPIO.output(self._pin_sr['noe'], GPIO.LOW)
         except Exception:
             pass
 
@@ -208,28 +208,28 @@ class OspyBoardControl(BaseControlPlugin):
         nst = len(self._stationState)
         srvals = newStationState
         try:
-            if self.__pi:
-                self.__pi.write(self.__pin_sr['clk'], 0)
-                self.__pi.write(self.__pin_sr['lat'], 0)
+            if self._pi:
+                self._pi.write(self._pin_sr['clk'], 0)
+                self._pi.write(self._pin_sr['lat'], 0)
                 for s in range(nst):
-                    self.__pi.write(self.__pin_sr['clk'], 0)
+                    self._pi.write(self._pin_sr['clk'], 0)
                     if srvals[nst - 1 - s]:
-                        self.__pi.write(self.__pin_sr['dat'], 1)
+                        self._pi.write(self._pin_sr['dat'], 1)
                     else:
-                        self.__pi.write(self.__pin_sr['dat'], 0)
-                    self.__pi.write(self.__pin_sr['clk'], 1)
-                self.__pi.write(self.__pin_sr['lat'], 1)
+                        self._pi.write(self._pin_sr['dat'], 0)
+                    self._pi.write(self._pin_sr['clk'], 1)
+                self._pi.write(self._pin_sr['lat'], 1)
             else:
-                GPIO.output(self.__pin_sr['clk'], GPIO.LOW)
-                GPIO.output(self.__pin_sr['lat'], GPIO.LOW)
+                GPIO.output(self._pin_sr['clk'], GPIO.LOW)
+                GPIO.output(self._pin_sr['lat'], GPIO.LOW)
                 for s in range(nst):
-                    GPIO.output(self.__pin_sr['clk'], GPIO.LOW)
+                    GPIO.output(self._pin_sr['clk'], GPIO.LOW)
                     if srvals[nst - 1 - s]:
-                        GPIO.output(self.__pin_sr['dat'], GPIO.HIGH)
+                        GPIO.output(self._pin_sr['dat'], GPIO.HIGH)
                     else:
-                        GPIO.output(self.__pin_sr['dat'], GPIO.LOW)
-                    GPIO.output(self.__pin_sr['clk'], GPIO.HIGH)
-                GPIO.output(self.__pin_sr['lat'], GPIO.HIGH)
+                        GPIO.output(self._pin_sr['dat'], GPIO.LOW)
+                    GPIO.output(self._pin_sr['clk'], GPIO.HIGH)
+                GPIO.output(self._pin_sr['lat'], GPIO.HIGH)
         except Exception:
             pass
 
@@ -257,4 +257,4 @@ class OspyBoardControl(BaseControlPlugin):
 
 
 import gv
-gv.scontrol = OspyBoardControl()
+gv.scontrol = OspiBoardControl()
