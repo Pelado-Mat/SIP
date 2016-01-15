@@ -10,7 +10,7 @@ from calendar import timegm
 import sys
 import subprocess
 import json
-import imp
+
 
 sys.path.append('./plugins')
 sys.path.append('./controlPlugins' )
@@ -88,6 +88,10 @@ def gv_init():
     gv.lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
     gv.scount = 0  # Station count, used in set station to track on stations with master association.
 
+    import os, os.path
+    gv.avscontrol = [x[:-3] for x in os.listdir("./controlPlugins") if x.endswith('py')]
+    gv.platform = gv.scontrol.platform
+
 
 def timing_loop():
     """ ***** Main timing algorithm. Runs in a separate thread.***** """
@@ -105,11 +109,14 @@ def timing_loop():
                 extra_adjustment = plugin_adjustment()
                 for i, p in enumerate(gv.pd):  # get both index and prog item
                     # check if program time matches current time, is active, and has a duration
+
                     if prog_match(p) and p[0] and p[6]:
                         # check each station for boards listed in program up to number of boards in Options
                         for b in range(len(p[7:7 + gv.sd['nbrd']])):
                             for s in range(8):
                                 sid = b * 8 + s  # station index
+                                if sid >= gv.sd['nst']:
+                                    break
                                 if sid + 1 == gv.sd['mas']:
                                     continue  # skip if this is master station
                                 if gv.srvals[sid]:  # skip if currently on
@@ -144,6 +151,8 @@ def timing_loop():
             for b in range(gv.sd['nbrd']):  # Check each station once a second
                 for s in range(8):
                     sid = b * 8 + s  # station index
+                    if sid >= gv.sd['nst']:
+                        break
                     if gv.srvals[sid]:  # if this station is on
                         if gv.now >= gv.rs[sid][1]:  # check if time is up
                             gv.srvals[sid] = 0

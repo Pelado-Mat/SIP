@@ -95,7 +95,7 @@ class change_values(ProtectedPage):
 
     def GET(self):
         qdict = web.input()
-        print 'qdict: ', qdict
+       # print 'qdict: ', qdict
         if 'rsn' in qdict and qdict['rsn'] == '1':
             stop_stations()
             raise web.seeother('/')
@@ -164,11 +164,25 @@ class change_options(ProtectedPage):
                     qdict['rstrt'] = '1'  # force restart with change
                 gv.sd[f] = qdict['o'+f]
 
-        if int(qdict['onbrd']) + 1 != gv.sd['nbrd']:
-            self.update_scount(qdict)
+        if 'ocontrolName' in qdict:
+            if 'ocontrolName' != gv.sd['controlName']:
+                gv.sd['controlName'] = qdict['ocontrolName']
+                qdict['rstrt'] = '1'  # force restart with change
 
-        gv.sd['nbrd'] = int(qdict['onbrd']) + 1
-        gv.sd['nst'] = gv.sd['nbrd'] * 8
+
+        if gv.sd['nst'] != int(qdict['onst']):
+            if int(qdict['onst']) > gv.scontrol.maxStations:
+                raise web.seeother('/vo?errorCode=too_many_stations')
+
+            gv.sd['nst'] = int(qdict['onst'])
+            gv.scontrol.nStations = gv.sd['nst']
+            nbrd = int(gv.scontrol.nStations / 8) + (gv.scontrol.nStations % 8 > 0 )
+            qdict['onbrd'] = nbrd # FIXME! Emulate 'nbrd'
+            if int(qdict['onbrd'])  != gv.sd['nbrd']:
+                self.update_scount(qdict)
+
+            gv.sd['nbrd'] = nbrd
+
 
         if 'ohtp' in qdict:
             if 'htp' not in gv.sd or gv.sd['htp'] != int(qdict['ohtp']):
@@ -195,7 +209,7 @@ class change_options(ProtectedPage):
             reboot()
 
         if 'rstrt' in qdict and qdict['rstrt'] == '1':
-#            restart(2)
+            restart(2)
             raise web.seeother('/restart')
         raise web.seeother('/')
 
@@ -516,6 +530,8 @@ class api_status(ProtectedPage):
                     irbit = (gv.sd['ir'][bid] >> s) & 1
                     status = {'station': sid, 'status': 'disabled', 'reason': '', 'master': 0, 'programName': '',
                               'remaining': 0}
+                    if sid >= gv.sd['nst']: # FIXME: more nbrd madness!
+                        break
                     if gv.sd['en'] == 1:
                         if sbit:
                             status['status'] = 'on'

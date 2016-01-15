@@ -54,10 +54,12 @@ class BaseControlPlugin(Singleton):
             dictionary with the default options that the plugin must use
         :return: returns nothing
         """
-        self.lock = threading.RLock()
+        self._lock = threading.RLock()
+        self._platform = ''
         self._params = self.load_params(defaultParameters)
-        self._maxOnStations = 5  # Max Numer of stations that can be powered at the same time.
+        self._maxOnStations = 5  # Max Numer of stations that can be powered at the same time.- Ignored
         self._stationState = []  # list of one byte per station, 1 = turn on, 0 = turn off
+
 
     def load_params(self, defaultParameters):
         paramFile = os.path.join(".", "data", self.__class__.__name__) + ".json"
@@ -73,21 +75,48 @@ class BaseControlPlugin(Singleton):
         return params
 
     @property
+    def platform(self):
+        return self._platform
+
+    @property
+    def maxStations(self):
+        raise NameError('Must be implemented in the derived class')
+
+    @property
+    def nStations(self):
+        return len(self._stationState)
+
+    @nStations.setter
+    def nStations(self, number):
+        """
+        Must be overloaded by the child class to make the change persistent
+        @param self:
+        @param number:
+        @return:
+        """
+        if self.nStations <= number:
+            self._stationState = self._stationState + [0] * ( number - self.nStations)
+        else:
+            self._stationState = self._stationState[:number]
+
+    @property
     def params(self):
         return self._params
 
     @params.setter
-    def params(self, parameters):
+    def params(self, params):
         # TODO: Add some simple validations
-        self._params = parameters
-
+        self._params = params
+        paramFile = os.path.join(".", "data", self.__class__.__name__) + ".json"
+        with open(paramFile, 'w') as f:
+            json.dump(params, f)
 
     @property
     def stations(self):
         """
         Return the list of stations available and the current State
         """
-        with self.lock:
+        with self._lock:
             return self._stationState
 
     @stations.setter
@@ -122,3 +151,29 @@ class BaseControlPlugin(Singleton):
         """
         self.stations = ([0] * len(self._stationState))
         return  self.stations
+
+    def pinCleanUp(self):
+        """
+        Stop al Stations and clean pin State
+        @return:
+        """
+        raise NameError('Must be implemented in the derived class')
+
+
+class BaseBoardPlugin(Singleton):
+    """
+    Base class to implement a HW abstraction layer to control the PINS
+    """
+    pass
+
+class RaspberryBoard(BaseBoardPlugin):
+    """
+    Implements RaspBerry PI HW management
+    """
+    pass
+
+class BeagleboneBoard(BaseBoardPlugin):
+    """
+    Implements BeagleboneBoard
+    """
+    pass

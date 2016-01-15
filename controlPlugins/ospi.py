@@ -17,6 +17,7 @@ except ImportError:
         GPIO = None
         print 'No GPIO module was loaded from GPIO Pins module'
 
+import time
 
 class OspiBoardControl(BaseControlPlugin):
 
@@ -30,14 +31,14 @@ class OspiBoardControl(BaseControlPlugin):
 
         # Private
         self._nst_per_board = self.params['nst_per_board']
+        self._maxStations = 256
         self._platform = self.params['platform']
         self._pin_map = self.params['pin_map']
         self._pin_rain_sense = self.params['pin_rain_sense']
         self._pin_relay = self.params['pin_relay']
         self._pin_sr = self.params['pin_sr']
         self._pi = None
-        # Internal State
-        self._stationState = [0] * (self.nStations)
+
 
         try:
             import pigpio
@@ -233,6 +234,11 @@ class OspiBoardControl(BaseControlPlugin):
         except Exception:
             pass
 
+    @property
+    def maxStations(self):
+        return self._maxStations
+    
+
     @BaseControlPlugin.stations.setter
     def stations(self, newStationState):
         """
@@ -244,7 +250,7 @@ class OspiBoardControl(BaseControlPlugin):
         if len(newStationState) != len(self._stationState):
             raise NameError("ERROR: The number of stations is not equal")
 
-        with self.lock:
+        with self._lock:
             if GPIO:
                 self.__disableShiftRegisterOutput()
                 self.__setShiftRegister(newStationState)
@@ -254,6 +260,22 @@ class OspiBoardControl(BaseControlPlugin):
                 print "GPIO not defined, cannot change the stations!"
         return self._stationState
 
+    def pinCleanUp(self):
+
+        self.stopStations()
+
+        if self._pi:
+            pass
+        else:
+            GPIO.cleanup()
+        time.sleep(1)
+
+    @BaseControlPlugin.nStations.setter
+    def nStations(self, number):
+        BaseControlPlugin.nStations.fset(self, number)
+        prms = self.params
+        prms['nStations'] = number
+        self.params = prms
 
 
 import gv

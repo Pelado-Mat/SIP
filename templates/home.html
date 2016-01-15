@@ -228,6 +228,8 @@ $if gv.sd['mm']:
         $for bid in range(0, gv.sd['nbrd']):
             $for s in range(0,8):
                 $ sid = bid*8 + s;
+                $if sid >= gv.sd['nst']:
+                    $break
                 $ sn = sid + 1
                 $ sbit = (gv.sbits[bid]>>s)&1
                 $ show = (gv.sd['show'][bid]>>s)&1
@@ -297,6 +299,8 @@ $else:
             $for bid in range(0, gv.sd['nbrd']):
                 $for s in range(0,8):
                     $ sid = bid*8 + s;
+                    $if sid >= gv.sd['nst']:
+                        $break
                     $ sn = sid + 1
                     $ show = (gv.sd['show'][bid]>>s)&1
                     $if show == 1:

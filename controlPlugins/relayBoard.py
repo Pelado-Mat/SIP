@@ -42,7 +42,7 @@ class RelayBoardControl(BaseControlPlugin):
 
 
         if use_pigpio:
-            self.__pi = pigpio.pi()
+            self._pi = pigpio.pi()
         else:
             if GPIO:
                 GPIO.setwarnings(False)
@@ -171,6 +171,11 @@ class RelayBoardControl(BaseControlPlugin):
             print "Problems seting pins!!"
             pass
 
+    @property
+    def maxStations(self):
+        return len(self._relay_pins)
+
+
     @BaseControlPlugin.stations.setter
     def stations(self, newStationState):
         """
@@ -182,7 +187,7 @@ class RelayBoardControl(BaseControlPlugin):
         if len(newStationState) != len(self._stationState):
             raise NameError("ERROR: The number of stations is not equal")
 
-        with self.lock:
+        with self._lock:
             for i in range(self.nStations):
                 try:
                     if gv.srvals[i]:  # if station is set to on
@@ -214,6 +219,26 @@ class RelayBoardControl(BaseControlPlugin):
                     pass
         self._stationState = newStationState
         return self._stationState
+
+    def pinCleanUp(self):
+        self.stopStations()
+
+        if self._pi:
+            pass
+        else:
+            GPIO.cleanup()
+        time.sleep(1)
+
+    @BaseControlPlugin.nStations.setter
+    def nStations(self, number):
+        BaseControlPlugin.nStations.fset(self, number)
+        prms = self.params
+        prms['nStations'] = number
+        self.params = prms
+
+
+
+
 
 
 import gv

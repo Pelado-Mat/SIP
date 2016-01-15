@@ -65,6 +65,7 @@ def reboot(wait=1, block=False):
     @param block: If True, clear output and perform reboot after wait.
         Set to True at start of thread (recursive).
     """
+    # FIXME!
     if block:
         gv.srvals = [0] * (gv.sd['nst'])
         set_output()
@@ -96,10 +97,7 @@ def poweroff(wait=1, block=False):
     if block:
         gv.srvals = [0] * (gv.sd['nst'])
         set_output()
-        if gv.use_pigpio:
-            pass
-        else:
-            GPIO.cleanup()
+        gv.scontrol.pinCleanUp()
         time.sleep(wait)
         try:
             print _('Powering off...')
@@ -121,20 +119,22 @@ def restart(wait=1, block=False):
     @param block: If True, clear output and perform reboot after wait.
         Set to True at start of thread (recursive).
     """
+    #FIXME!
     if block:
         report_restart()
         gv.srvals = [0] * (gv.sd['nst'])
         set_output()
-        if gv.use_pigpio:
-            pass
-        else:
-            GPIO.cleanup()
+        gv.scontrol.pinCleanUp()
+
         time.sleep(wait)
         try:
             print _('Restarting...')
         except Exception:
             pass
-        subprocess.Popen('service sip restart'.split())
+ #       subprocess.Popen('service sip restart'.split())
+        print "Please restart manually"
+        import sys
+        sys.exit()
     else:
         t = Thread(target=restart, args=(wait, True))
         t.start()
@@ -346,7 +346,9 @@ def prog_match(prog):
     if not prog[0]:
         return 0  # Skip if program is not enabled
     devday = int(gv.now / 86400)  # Check day match
+
     lt = time.gmtime(gv.now)
+
     if (prog[1] >= 128) and (prog[2] > 1):  # Interval program
         if (devday % prog[2]) != (prog[1] - 128):
             return 0
@@ -384,6 +386,8 @@ def schedule_stations(stations):
         for b in range(len(stations)):
             for s in range(8):
                 sid = b * 8 + s  # station index
+                if sid >= gv.scontrol.maxStations:
+                    break
                 if gv.rs[sid][2]:  # if station has a duration value
                     if not rain or gv.sd['ir'][b] & 1 << s:  # if no rain or station ignores rain
                         gv.rs[sid][0] = accumulate_time  # start at accumulated time
@@ -397,6 +401,8 @@ def schedule_stations(stations):
         for b in range(len(stations)):
             for s in range(8):
                 sid = b * 8 + s  # station index
+                if sid >= gv.scontrol.maxStations:
+                    break
                 if not stations[b] & 1 << s:  # skip stations not in prog
                     continue
                 if gv.rs[sid][2]:  # if station has a duration value

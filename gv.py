@@ -5,6 +5,7 @@ import time
 from calendar import timegm
 from helpers import password_salt
 
+
 #####################
 #### Global vars ####
 #####################
@@ -63,7 +64,7 @@ sd = {
     u"show": [255],
     u"salt": password_salt(),
     u"lang": u"default",
-    u"controlName": u"relayBoard",
+    u"controlName": u"ospi",
     u"nbrd" : 1, # FIXME! must be replaced with the proper call to ControlPlugin
     u'nst' : 8
 }
@@ -79,9 +80,7 @@ nowt = time.localtime()
 now = timegm(nowt)
 tz_offset = int(time.time() - timegm(time.localtime())) # compatible with Javascript (negative tz shown as positive value)
 plugin_menu = []  # Empty list of lists for plugin links (e.g. ['name', 'URL'])
-
 srvals = [0]   # Shift Register values
-
 rovals = [0]   # Run Once durations
 snames = [0]  # Load station names from file
 pd = [0]  # Load program data from file
@@ -89,11 +88,11 @@ plugin_data = {}  # Empty dictionary to hold plugin based global data
 ps = []  # Program schedule (used for UI display)
 pon = None  # Program on (Holds program number of a running program)
 sbits = [0]   # Used to display stations that are on in UI
-
 rs = []  # run schedule
 lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
 scount = 0  # Station count, used in set station to track on stations with master association.
 
+avscontrol = []
 
 options = [
     [_("System name"), "string", "name", _("Unique name of this SIP system."), _("System")],
@@ -107,8 +106,9 @@ options = [
     [_("Current password"), "password", "opw", _("Re-enter the current password."), _("Change Password")],
     [_("New password"), "password", "npw", _("Enter a new password."), _("Change Password")],
     [_("Confirm password"), "password", "cpw", _("Confirm the new password."), _("Change Password")],
+    [_("Station Control Plugin"), "list", "controlName", _("Type of HW."), _("Station Handling")],
     [_("Sequential"), "boolean", "seq", _("Sequential or concurrent running mode."), _("Station Handling")],
-    [_("Extension boards"), "int", "nbrd", _("Number of extension boards."), _("Station Handling")],
+    [_("Number of Stations"), "int", "nst", _("Number of Stations."), _("Station Handling")],
     [_("Station delay"), "int", "sdt", _("Station delay time (in seconds), between 0 and 240."), _("Station Handling")],
     [_("Master station"), "int", "mas",_( "Select master station."), _("Configure Master")],
     [_("Master on adjust"), "int", "mton", _("Master on delay (in seconds), between +0 and +60."), _("Configure Master")],
