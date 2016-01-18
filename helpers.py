@@ -131,10 +131,8 @@ def restart(wait=1, block=False):
             print _('Restarting...')
         except Exception:
             pass
- #       subprocess.Popen('service sip restart'.split())
-        print "Please restart manually"
-        import sys
-        sys.exit()
+        subprocess.Popen('service sip restart'.split())
+
     else:
         t = Thread(target=restart, args=(wait, True))
         t.start()

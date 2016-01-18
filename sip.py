@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import i18n
-import json
-import ast                                                                                                
+import ast
 import time
 import thread
 from calendar import timegm
@@ -308,12 +307,6 @@ if __name__ == '__main__':
     print _('Station Control plugin:')
     print ' ', gv.scontrol.__class__.__name__
 
-    #try:
-    #    import controlPlugins
-    #    print _('Station Control plugin:')
-    #except Exception:
-    #    pass
-    #print ' ', controlPlugins.__all__
 
 
     thread.start_new_thread(timing_loop, ())

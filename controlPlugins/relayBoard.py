@@ -222,11 +222,6 @@ class RelayBoardControl(BaseControlPlugin):
 
     def pinCleanUp(self):
         self.stopStations()
-
-        if self._pi:
-            pass
-        else:
-            GPIO.cleanup()
         time.sleep(1)
 
     @BaseControlPlugin.nStations.setter
