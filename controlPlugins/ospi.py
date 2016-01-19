@@ -31,7 +31,7 @@ class OspiBoardControl(BaseControlPlugin):
         self._options = [
             [_("Number of Stations"), "int", "nStations", _("Number of installed Stations"), _("Stations")],
             [_("Relay Pin"), "int", "pin_relay", _("GPIO PIN used for the Relay Plugin."), _("System HW")],
-            [_("Rain Sensor Pin"),"int","pin_rain", _("GPIO PIN used for the Rain Sensor"),_("System HW")]
+            [_("Rain Sensor Pin"),"int","pin_rain_sense", _("GPIO PIN used for the Rain Sensor"),_("System HW")]
         ]
         # Private
         self._nst_per_board = self.params['nst_per_board']

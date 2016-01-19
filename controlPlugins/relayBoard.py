@@ -41,8 +41,8 @@ class RelayBoardControl(BaseControlPlugin):
             [_("Number of Stations"), "int", "nStations", _("Number of installed Stations"), _("Stations")],
             [_("Active High"), "boolean", "active_high", _("State to activate the Stations Relays"), _("System HW")],
             [_("Relay Pin"), "int", "pin_relay", _("GPIO PIN used for the Relay Plugin."), _("System HW")],
-            [_("Rain Sensor Pin"),"int","pin_rain", _("GPIO PIN used for the Rain Sensor"),_("System HW")],
-            [_("Stations Pins"), "string", "relay_pins", _("GPIO Pins used to control the relays"), _("System HW")]
+            [_("Rain Sensor Pin"),"int","pin_rain_sense", _("GPIO PIN used for the Rain Sensor"),_("System HW")],
+            [_("Stations Pins"), "array", "relay_pins", _("GPIO Pins used to control the relays"), _("System HW")]
         ]
         # Internal State
         self._stationState = [0] * (self.nStations)

@@ -1,7 +1,7 @@
 $def with (errorCode)
 
 $var title: $_('SIP HW Options')
-$var page: options
+$var page: hw_options
 $code:
 	opts = gv.scontrol.options
 	languages = i18n.languages
@@ -20,23 +20,8 @@ $code:
             jQuery(".tooltip").toggle();
         });
 
-        jQuery("button#cReboot").click(function(){
-            jQuery("input[name='rbt']").val(1);
-            jQuery("form[name='of']").submit();
-        });
-
-        jQuery("button#cRestart").click(function(){
-            jQuery("input[name='rstrt']").val(1);
-            jQuery("form[name='of']").submit();
-        });
 
         jQuery("button#cSubmit").click(function(){
-            // process time zone value
-//            var th = parseInt(jQuery("input[name='th']").val(),10);
-//            var tq = parseInt(jQuery("input[name='tq']").val(),10);
-//            tq = (tq/15>>0)/4.0;
-//            th = th+(th>=0?tq:-tq);
-//            jQuery("input[name='otz']").val(((th+12)*4)>>0);
             jQuery("form[name='of']").submit();
         });
 
@@ -74,7 +59,7 @@ $code:
 
 </script>
 <div id="options">
-    <div class="title">$_('Edit Options')</div>
+    <div class="title">$_('Edit HW Options')</div>
     <button id="tooltips">$_('Show Tooltips')</button>
     <form name="of" action="${app_path('/co')}" method="get">
     $code:
@@ -86,7 +71,7 @@ $code:
             label = opt[0]
             datatype = opt[1]
             if datatype != "password":
-                value = gv.sd[opt[2]]
+                value = gv.scontrol.params[opt[2]]
             name = opt[2]
             tooltip = opt[3]
             category = opt[4]
@@ -102,52 +87,17 @@ $code:
                 output += "<input name='o" + name + "' type='text' size='31' maxlength='31' value=\"" + value + "\">\n"
             elif datatype == "password":
                 output += "<input name='" + name + "' type='password' size='31' maxlength='31'><span class='inputError' id='error" + name + "'></span>\n"
-            elif name == "lang":
-                output += "<select name= 'olang'>\n"
-                output += "<option " + ("selected " if value=='default' else "") + "value='default'>"+_('Default')+"</option>\n"
-                for L in langKeys:
-                    output += "<option " + ("selected " if value==L else "") + "value='"+L+"'>"+languages[L]+"</option>\n"
-                output += "</select>\n"
-            elif name == "tz":
-                output += "<input name='otz' type='hidden' value='0'>\n"
-                tz = value - 48
-                th = ("+" if tz>=0 else "-") + str(abs(tz)/4>>0)
-                tq = str((abs(tz)%4)*15/10>>0) + str((abs(tz)%4)*15%10)
-                output += "<input name='th' type='text' size='3' maxlength='3' value='"+ th +"'>:<input name='tq' type='text' size='3' maxlength='3' value='" + tq + "'>\n"
-            elif name == "mas":
-                output += "<select name='omas'>\n"
-                output += "<option " + ("selected " if value==0 else "") + "value='0'>"+_('None')+"</option>\n"
-                for i in range(gv.sd['nst']):
-                    bid = i // 8
-                    sid = i % 8
-                    if (gv.sd['show'][bid]>>sid)&1 == 1:
-                        output += "<option " + ("selected " if value==i+1 else "") + "value='" + str(i+1) + "'>" + snames[i] + "  (Station " + str(i+1) + ")</option>\n"
-                output += "</select>\n"
-            elif name == "htp":
-                output += "<input name='ohtp' type='text' size='5' maxlength='5' value='" + str(value) + "'>\n"
-            elif name == "controlName":
-                output += "<select name= 'ocontrolName'>\n"
-                for L in avscontrol:
-                    output += "<option " + ("selected " if value==L else "") + "value='"+L+"'>"+L+"</option>\n"
-                output += "</select>\n"
-                output += "&nbsp;<button id='cHWOptions' class='reboot danger' title=" + json.dumps(_('HW Options'), ensure_ascii=False) + ">" + _('HW Options')+"</button>"
-
-            elif name == "nst":
-                output += "<input name='onst' type='text' size='3' maxlength='3' value='" + str(value) + "'><span class='inputError' id='error" + name + "'></span>\n"
-            else:
-                output += "<input name='o" + name + "' type='text' size='3' maxlength='3' value='" + str(value) + "'>\n"
+            elif datatype == "int":
+                value = str(value)
+                output += "<input name='o" + name + "' type='text' size='31' maxlength='31' value=\"" + value + "\">\n"
+            elif datatype == "array":
+                value = ','.join(str(x) for x in value)
+                output += "<input name='o" + name + "' type='text' size='31' maxlength='100' value=\"" + value + "\">\n"
 
             output += "<span class='tooltip'>" + tooltip + "</span>\n"
             output += "</div>\n\n"
-        output += categoryCloser + "<div class='category collapsible collapsed'><h4>"+_('System Restart')+"</h4>"
-        output += "<div class='option'>"
-        output += "&nbsp;<button id='cRestart' class='restart danger' title=" + json.dumps(_('Restart software'), ensure_ascii=False)+">" + _('Restart')+"</button>"
-        output += "&nbsp;<button id='cReboot' class='reboot danger' title=" + json.dumps(_('Reboot hardware'), ensure_ascii=False) + ">" + _('Reboot')+"</button>"
-        output += "</div>\n"
         output += categoryCloser
     $:{output}
-        <input type="hidden" name="rbt" value="0">
-        <input type="hidden" name="rstrt" value="0">
     </form>
 </div>
 

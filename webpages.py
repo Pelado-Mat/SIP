@@ -121,6 +121,42 @@ class change_values(ProtectedPage):
         report_value_change()
         raise web.seeother('/')  # Send browser back to home page
 
+class view_hw_options(ProtectedPage):
+    """Open the hw options page for viewing and editing."""
+
+    def GET(self):
+        qdict = web.input()
+        errorCode = "none"
+        if 'errorCode' in qdict:
+            errorCode = qdict['errorCode']
+
+        return template_render.hw_options(errorCode)
+
+class change_hw_options(ProtectedPage):
+    """
+    Save changes to Control Plugin Parameters made on the HW options page
+    """
+    def GET(self):
+        qdict = web.input()
+        hw_params = gv.scontrol.params
+        hw_options = gv.scontrol.options
+
+        for p in qdict.keys():
+            # FIXME! Should add some validations!
+            datatype = hw_options[p][1]
+            value = qdict[p]
+            if datatype == 'int':
+                value = int(value)
+            elif datatype == 'array':
+                value = [int(x) for x in value.split(',')]
+            elif datatype == 'boolean':
+                value = eval(value) # FIXME! VERY DANGEROUS!!!!
+            hw_params[p] = qdict[p]
+        print hw_params
+        gv.scontrol.params = hw_params
+        restart(2)
+        raise web.seeother('/restart')
+
 
 class view_options(ProtectedPage):
     """Open the options page for viewing and editing."""
@@ -132,6 +168,7 @@ class view_options(ProtectedPage):
             errorCode = qdict['errorCode']
 
         return template_render.options(errorCode)
+
 
 
 class change_options(ProtectedPage):
@@ -170,18 +207,18 @@ class change_options(ProtectedPage):
                 qdict['rstrt'] = '1'  # force restart with change
 
 
-        if gv.sd['nst'] != int(qdict['onst']):
-            if int(qdict['onst']) > gv.scontrol.maxStations:
-                raise web.seeother('/vo?errorCode=too_many_stations')
+       # if gv.sd['nst'] != int(qdict['onst']):
+       #     if int(qdict['onst']) > gv.scontrol.maxStations:
+       #         raise web.seeother('/vo?errorCode=too_many_stations')
 
-            gv.sd['nst'] = int(qdict['onst'])
-            gv.scontrol.nStations = gv.sd['nst']
-            nbrd = int(gv.scontrol.nStations / 8) + (gv.scontrol.nStations % 8 > 0 )
-            qdict['onbrd'] = nbrd # FIXME! Emulate 'nbrd'
-            if int(qdict['onbrd'])  != gv.sd['nbrd']:
-                self.update_scount(qdict)
+         #   gv.sd['nst'] = int(qdict['onst'])
+         #   gv.scontrol.nStations = gv.sd['nst']
+         #   nbrd = int(gv.scontrol.nStations / 8) + (gv.scontrol.nStations % 8 > 0 )
+         #   qdict['onbrd'] = nbrd # FIXME! Emulate 'nbrd'
+         #   if int(qdict['onbrd'])  != gv.sd['nbrd']:
+         #       self.update_scount(qdict)
 
-            gv.sd['nbrd'] = nbrd
+         #   gv.sd['nbrd'] = nbrd
 
 
         if 'ohtp' in qdict:

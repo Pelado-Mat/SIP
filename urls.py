@@ -24,6 +24,8 @@ urls = [
     '/ttu', 'webpages.toggle_temp',
     '/rev', 'webpages.show_revision',
     '/wl', 'webpages.water_log',
+    '/vhwo', 'webpages.view_hw_options',
+    '/chwo', 'webpages.change_hw_options',
     '/api/status', 'webpages.api_status',
     '/api/log', 'webpages.api_log',
     '/login', 'webpages.login',
