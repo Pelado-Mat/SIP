@@ -131,6 +131,8 @@ $code:
                 for L in avscontrol:
                     output += "<option " + ("selected " if value==L else "") + "value='"+L+"'>"+L+"</option>\n"
                 output += "</select>\n"
+                output += "&nbsp;<button id='cHWOptions' class='reboot danger' title=" + json.dumps(_('HW Options'), ensure_ascii=False) + ">" + _('HW Options')+"</button>"
+
             elif name == "nst":
                 output += "<input name='onst' type='text' size='3' maxlength='3' value='" + str(value) + "'><span class='inputError' id='error" + name + "'></span>\n"
             else:

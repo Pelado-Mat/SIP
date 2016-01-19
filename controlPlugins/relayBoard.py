@@ -35,8 +35,15 @@ class RelayBoardControl(BaseControlPlugin):
         self._pin_map = self.params['pin_map']
         self._pin_rain_sense = self.params['pin_rain_sense']
         self._pin_relay = self.params['pin_relay']
-        self._active = self.params['active']
+        self._active_high = self.params['active_high']
         self._pi = None
+        self._options = [
+            [_("Number of Stations"), "int", "nStations", _("Number of installed Stations"), _("Stations")],
+            [_("Active High"), "boolean", "active_high", _("State to activate the Stations Relays"), _("System HW")],
+            [_("Relay Pin"), "int", "pin_relay", _("GPIO PIN used for the Relay Plugin."), _("System HW")],
+            [_("Rain Sensor Pin"),"int","pin_rain", _("GPIO PIN used for the Rain Sensor"),_("System HW")],
+            [_("Stations Pins"), "string", "relay_pins", _("GPIO Pins used to control the relays"), _("System HW")]
+        ]
         # Internal State
         self._stationState = [0] * (self.nStations)
 
@@ -63,7 +70,7 @@ class RelayBoardControl(BaseControlPlugin):
             'relay_pins': [11,12,13,15,16,18,22,7,3,5,24,26],  # Pins Conected with the relays - relay_board default
             'pin_rain_sense': 8,  # Autodected on first run - relay_board default
             'pin_relay': 10,  # Autodected on first run - relay_board default
-            'active': 'high'
+            'active_high': True
         }
 
         try:
@@ -157,7 +164,7 @@ class RelayBoardControl(BaseControlPlugin):
                 else:
                     GPIO.setup(self._relay_pins[i], GPIO.OUT)
 
-                if self._active == 'low':
+                if not self._active_high:
                     if use_pigpio:
                         self__pi.write(self._relay_pins[i], 1)
                     else:
@@ -203,7 +210,7 @@ class RelayBoardControl(BaseControlPlugin):
                                 GPIO.output(self._relay_pins[i], GPIO.HIGH)
                                 #                    print 'relay switched on', i + 1, "pin", relay_pins[i]  #  for testing #############
                     else:  # station is set to off
-                        if self._active == 'low':  # if the relay type is active low, set the output high
+                        if not self._active_high:  # if the relay type is active low, set the output high
                             if gv.use_pigpio:
                                 pi.write(self._relay_pins[i], 1)
                             else:
@@ -230,6 +237,9 @@ class RelayBoardControl(BaseControlPlugin):
         prms = self.params
         prms['nStations'] = number
         self.params = prms
+
+
+
 
 
 

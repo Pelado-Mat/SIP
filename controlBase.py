@@ -56,6 +56,7 @@ class BaseControlPlugin(Singleton):
         """
         self._lock = threading.RLock()
         self._platform = ''
+        self._options = []
         self._params = self.load_params(defaultParameters)
         self._maxOnStations = 5  # Max Numer of stations that can be powered at the same time.- Ignored
         self._stationState = []  # list of one byte per station, 1 = turn on, 0 = turn off
@@ -122,6 +123,10 @@ class BaseControlPlugin(Singleton):
     @stations.setter
     def stations(self, newStationsState):
         raise NameError('Must be implemented in the derived class')
+
+    @property
+    def options(self):
+        return self._options
 
     @property
     def maxOnStations(self):
