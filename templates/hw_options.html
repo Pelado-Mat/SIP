@@ -61,18 +61,17 @@ $code:
 <div id="options">
     <div class="title">$_('Edit HW Options')</div>
     <button id="tooltips">$_('Show Tooltips')</button>
-    <form name="of" action="${app_path('/co')}" method="get">
+    <form name="of" action="${app_path('/chwo')}" method="get">
     $code:
         output = ""
         oldcategory = ""
         categoryCloser = ""
         avscontrol = gv.avscontrol
         for opt in opts:
-            label = opt[0]
-            datatype = opt[1]
-            if datatype != "password":
-                value = gv.scontrol.params[opt[2]]
-            name = opt[2]
+            name = opt[0]
+            label = opt[1]
+            datatype = opt[2]
+            value = opt[5]
             tooltip = opt[3]
             category = opt[4]
 

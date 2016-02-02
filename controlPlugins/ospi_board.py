@@ -25,23 +25,23 @@ class OspiBoardControl(BaseControlPlugin):
         defParams = self.__autoconfigure_parms()
         super(OspiBoardControl, self).__init__(defParams)
         # Parameters
-        self.nStations = self.params['nStations']
-        self.nbrd = int(self.params['nStations'] / self.params['nst_per_board']) + (self.params['nStations'] & self.params['nst_per_board'] > 0 )
-        self._maxOnStations = self.params['maxOnStations']
+        self.nbrd = int(self._params['nStations'] / self._params['nst_per_board']) + (self._params['nStations'] & self._params['nst_per_board'] > 0)
+        self._maxOnStations = self._params['maxOnStations']
         self._options = [
-            [_("Number of Stations"), "int", "nStations", _("Number of installed Stations"), _("Stations")],
-            [_("Relay Pin"), "int", "pin_relay", _("GPIO PIN used for the Relay Plugin."), _("System HW")],
-            [_("Rain Sensor Pin"),"int","pin_rain_sense", _("GPIO PIN used for the Rain Sensor"),_("System HW")]
+            ['nStations', _("Number of Stations"), "int", _("Number of installed Stations"), _("Stations")],
+            ['pin_rain_sense',_("Rain Sensor Pin"),"int", _("GPIO PIN used for the Rain Sensor"),_("System HW")]
         ]
         # Private
-        self._nst_per_board = self.params['nst_per_board']
+        self._nst_per_board = self._params['nst_per_board']
         self._maxStations = 256
-        self._platform = self.params['platform']
-        self._pin_map = self.params['pin_map']
-        self._pin_rain_sense = self.params['pin_rain_sense']
-        self._pin_relay = self.params['pin_relay']
-        self._pin_sr = self.params['pin_sr']
+        self._platform = self._params['platform']
+        self._pin_map = self._params['pin_map']
+        self._pin_rain_sense = self._params['pin_rain_sense']
+        self._pin_relay = self._params['pin_relay']
+        self._pin_sr = self._params['pin_sr']
         self._pi = None
+
+        self._stationState = [0] * self._params['nStations']
 
 
         try:
@@ -271,9 +271,9 @@ class OspiBoardControl(BaseControlPlugin):
     @BaseControlPlugin.nStations.setter
     def nStations(self, number):
         BaseControlPlugin.nStations.fset(self, number)
-        prms = self.params
+        prms = self._params
         prms['nStations'] = number
-        self.params = prms
+        self._params = prms
 
 
 import gv

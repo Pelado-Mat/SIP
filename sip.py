@@ -136,7 +136,7 @@ def timing_loop():
                                         gv.ps[sid][0] = i + 1  # store program number for display
                                         gv.ps[sid][1] = duration
                                     else:  # concurrent mode
-                                        # If duration is shortter than any already set for this station
+                                        # If duration is shorter than any already set for this station
                                         if duration < gv.rs[sid][2]:
                                             continue
                                         else:
@@ -213,7 +213,7 @@ def timing_loop():
                     gv.rs.append([0, 0, 0, 0])
                 gv.sd['bsy'] = 0
 
-            if gv.sd['mas'] and (gv.sd['mm'] or not gv.sd['seq']):  # handle master for maual or concurrent mode.
+            if gv.sd['mas'] and (gv.sd['mm'] or not gv.sd['seq']):  # handle master for manual or concurrent mode.
                 mval = 0
                 for sid in range(gv.sd['nst']):
                     bid = sid / 8

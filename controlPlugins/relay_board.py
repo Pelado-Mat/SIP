@@ -29,23 +29,27 @@ class RelayBoardControl(BaseControlPlugin):
         defParams = self.__autoconfigure_parms()
         super(RelayBoardControl, self).__init__(defParams)
         # Parameters
-        self.nStations = self.params['nStations']
-        self._relay_pins = self.params['relay_pins']
-        self._platform = self.params['platform']
-        self._pin_map = self.params['pin_map']
-        self._pin_rain_sense = self.params['pin_rain_sense']
-        self._pin_relay = self.params['pin_relay']
-        self._active_high = self.params['active_high']
+        self._relay_pins = self._params['relay_pins']
+        self._platform = self._params['platform']
+        self._pin_map = self._params['pin_map']
+        self._pin_rain_sense = self._params['pin_rain_sense']
+        self._pin_relay = self._params['pin_relay']
+        self._active_high = self._params['active_high']
         self._pi = None
+        # Default options description available to build the HW options menu.
         self._options = [
-            [_("Number of Stations"), "int", "nStations", _("Number of installed Stations"), _("Stations")],
-            [_("Active High"), "boolean", "active_high", _("State to activate the Stations Relays"), _("System HW")],
-            [_("Relay Pin"), "int", "pin_relay", _("GPIO PIN used for the Relay Plugin."), _("System HW")],
-            [_("Rain Sensor Pin"),"int","pin_rain_sense", _("GPIO PIN used for the Rain Sensor"),_("System HW")],
-            [_("Stations Pins"), "array", "relay_pins", _("GPIO Pins used to control the relays"), _("System HW")]
+            ["nStations",_("Number of Stations"), "int", _("Number of installed Stations"), _("Stations")],
+            ["active_high", _("Active High"), "boolean", _("State to activate the Stations Relays"), _("System HW")],
+            ["pin_rain_sense", _("Rain Sensor Pin"),"int",_("GPIO PIN used for the Rain Sensor"),_("System HW")],
+            ["relay_pins", _("Stations Pins"), "array", _("GPIO Pins used to control the relays"), _("System HW")]
         ]
-        # Internal State
-        self._stationState = [0] * (self.nStations)
+
+
+        # Safeguard if someone try to configure more stations than the available pins
+        if self._params['nStations'] > len(self._relay_pins):
+            self._stationState = [0] * len(self._relay_pins)
+        else:
+            self._stationState = [0] * self._params['nStations']
 
 
         if use_pigpio:
@@ -67,7 +71,7 @@ class RelayBoardControl(BaseControlPlugin):
             'maxOnStations': 5,
             'platform': 'pi',
             'pin_map': [],  # Autodected on first run
-            'relay_pins': [11,12,13,15,16,18,22,7,3,5,24,26],  # Pins Conected with the relays - relay_board default
+            'relay_pins': [11,12,13,15,16,18,22,7],  # Pins Conected with the relays - relay_board default
             'pin_rain_sense': 8,  # Autodected on first run - relay_board default
             'pin_relay': 10,  # Autodected on first run - relay_board default
             'active_high': True
@@ -149,7 +153,6 @@ class RelayBoardControl(BaseControlPlugin):
         Define and setup GPIO pins for shift register operation
         @return:
         """
-
         try:
             import pigpio
             use_pigpio = True
@@ -178,6 +181,8 @@ class RelayBoardControl(BaseControlPlugin):
             print "Problems seting pins!!"
             pass
 
+
+
     @property
     def maxStations(self):
         return len(self._relay_pins)
@@ -198,7 +203,7 @@ class RelayBoardControl(BaseControlPlugin):
             for i in range(self.nStations):
                 try:
                     if gv.srvals[i]:  # if station is set to on
-                        if self._active == 'low':  # if the relay type is active low, set the output low
+                        if not self._active_high:  # if the relay type is active low, set the output low
                             if gv.use_pigpio:
                                 pi.write(self._relay_pins[i], 0)
                             else:
@@ -233,10 +238,19 @@ class RelayBoardControl(BaseControlPlugin):
 
     @BaseControlPlugin.nStations.setter
     def nStations(self, number):
+        if number > len(self._relay_pins):
+            raise NameError("Tried to configure more Stations than the available PINS!")
         BaseControlPlugin.nStations.fset(self, number)
-        prms = self.params
+        prms = self._params
         prms['nStations'] = number
-        self.params = prms
+        self._params = prms
+
+
+
+
+
+
+
 
 
 

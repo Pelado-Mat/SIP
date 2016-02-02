@@ -126,13 +126,6 @@ $code:
                 output += "</select>\n"
             elif name == "htp":
                 output += "<input name='ohtp' type='text' size='5' maxlength='5' value='" + str(value) + "'>\n"
-            elif name == "controlName":
-                output += "<select name= 'ocontrolName'>\n"
-                for L in avscontrol:
-                    output += "<option " + ("selected " if value==L else "") + "value='"+L+"'>"+L+"</option>\n"
-                output += "</select>\n"
-                output += "&nbsp;<button id='cHWOptions' class='submit' title=" + json.dumps(_('HW Options'), ensure_ascii=False) + ">" + _('HW Options')+"</button>"
-
             else:
                 output += "<input name='o" + name + "' type='text' size='3' maxlength='3' value='" + str(value) + "'>\n"
 

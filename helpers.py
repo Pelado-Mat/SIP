@@ -43,6 +43,8 @@ def set_output():
      FIXME: Just a dummy function must be replaced
     """
     gv.scontrol.stations = gv.srvals
+    zone_change = signal('zone_change')
+    zone_change.send()
 
 
 ##############################

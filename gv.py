@@ -106,7 +106,7 @@ options = [
     [_("Current password"), "password", "opw", _("Re-enter the current password."), _("Change Password")],
     [_("New password"), "password", "npw", _("Enter a new password."), _("Change Password")],
     [_("Confirm password"), "password", "cpw", _("Confirm the new password."), _("Change Password")],
-    [_("Station Control Plugin"), "list", "controlName", _("Type of HW."), _("Station Handling")],
+#    [_("Station Control Plugin"), "list", "controlName", _("Type of HW."), _("Station Handling")],
     [_("Sequential"), "boolean", "seq", _("Sequential or concurrent running mode."), _("Station Handling")],
 #    [_("Number of Stations"), "int", "nst", _("Number of Stations."), _("Station Handling")],
     [_("Station delay"), "int", "sdt", _("Station delay time (in seconds), between 0 and 240."), _("Station Handling")],
