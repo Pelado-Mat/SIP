@@ -178,24 +178,22 @@ class change_hw_options(ProtectedPage):
             for i in range(incr*8):
                 gv.snames.append("S"+"{:0>2d}".format(i+1+ln))
             for i in range(incr * 8):
-                gv.srvals.append(0)
                 gv.ps.append([0, 0])
                 gv.rs.append([0, 0, 0, 0])
             for i in range(incr):
                 gv.sbits.append(0)
+            gv.srvals = gv.srvals + [0] * (nStations - len(gv.srvals))
         elif nbrd < gv.sd['nbrd']:  # Shorten lists
-            onbrd = int(qdict['onbrd'])
-            decr = gv.sd['nbrd'] - onbrd
-            gv.sd['mo'] = gv.sd['mo'][:onbrd]
-            gv.sd['ir'] = gv.sd['ir'][:onbrd]
-            gv.sd['iw'] = gv.sd['iw'][:onbrd]
-            gv.sd['show'] = gv.sd['show'][:onbrd]
-            newlen = gv.sd['nst'] - decr * 8
-            gv.srvals = gv.srvals[:newlen]
-            gv.ps = gv.ps[:newlen]
-            gv.rs = gv.rs[:newlen]
-            gv.snames = gv.snames[:newlen]
-            gv.sbits = gv.sbits[:onbrd]
+            decr = gv.sd['nbrd'] - nbrd
+            gv.sd['mo'] = gv.sd['mo'][:nbrd]
+            gv.sd['ir'] = gv.sd['ir'][:nbrd]
+            gv.sd['iw'] = gv.sd['iw'][:nbrd]
+            gv.sd['show'] = gv.sd['show'][:nbrd]
+            gv.srvals = gv.srvals[:nStations]
+            gv.ps = gv.ps[:nStations]
+            gv.rs = gv.rs[:nStations]
+            gv.snames = gv.snames[:nStations]
+            gv.sbits = gv.sbits[:nbrd]
         jsave(gv.snames, 'snames')
 
 
