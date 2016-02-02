@@ -9,6 +9,7 @@ $code:
 	langKeys.sort()
 	snames = gv.snames
 
+
 <script>
     var errorCode = "${errorCode}";
     // Initialize behaviors
@@ -61,6 +62,11 @@ $code:
                 jQuery("#errorcpw").text($:{json.dumps(_("Passwords don't match, please re-enter."), ensure_ascii=False)});
                 jQuery("#errorcpw").parents(".collapsible").toggleClass("expanded").toggleClass("collapsed");
                 break;
+            case "too_many_stations":
+                jQuery("#errornst").text($:{json.dumps(_("The HW do not support so many Stations."), ensure_ascii=False)});
+                jQuery("#errornst").parents(".collapsible").toggleClass("expanded").toggleClass("collapsed");
+                break;
+
         }
 
         jQuery(".collapsible h4").first().parent(".category").toggleClass("expanded").toggleClass("collapsed");
@@ -76,6 +82,7 @@ $code:
         output = ""
         oldcategory = ""
         categoryCloser = ""
+        avscontrol = gv.avscontrol
         for opt in opts:
             label = opt[0]
             datatype = opt[1]
@@ -119,8 +126,6 @@ $code:
                 output += "</select>\n"
             elif name == "htp":
                 output += "<input name='ohtp' type='text' size='5' maxlength='5' value='" + str(value) + "'>\n"
-            elif name == "nbrd":
-                output += "<input name='onbrd' type='text' size='3' maxlength='3' value='" + str(value - 1) + "'>\n"
             else:
                 output += "<input name='o" + name + "' type='text' size='3' maxlength='3' value='" + str(value) + "'>\n"
 

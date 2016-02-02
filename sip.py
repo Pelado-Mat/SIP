@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import i18n
-import json
-import ast                                                                                                
+import ast
 import time
 import thread
 from calendar import timegm
 import sys
 import subprocess
 import json
-import imp
+
 
 sys.path.append('./plugins')
 sys.path.append('./controlPlugins' )
@@ -88,6 +87,10 @@ def gv_init():
     gv.lrun = [0, 0, 0, 0]  # station index, program number, duration, end time (Used in UI)
     gv.scount = 0  # Station count, used in set station to track on stations with master association.
 
+    import os, os.path
+    gv.avscontrol = [x[:-3] for x in os.listdir("./controlPlugins") if x.endswith('py')]
+    gv.platform = gv.scontrol.platform
+
 
 def timing_loop():
     """ ***** Main timing algorithm. Runs in a separate thread.***** """
@@ -105,11 +108,14 @@ def timing_loop():
                 extra_adjustment = plugin_adjustment()
                 for i, p in enumerate(gv.pd):  # get both index and prog item
                     # check if program time matches current time, is active, and has a duration
+
                     if prog_match(p) and p[0] and p[6]:
                         # check each station for boards listed in program up to number of boards in Options
                         for b in range(len(p[7:7 + gv.sd['nbrd']])):
                             for s in range(8):
                                 sid = b * 8 + s  # station index
+                                if sid >= gv.sd['nst']:
+                                    break
                                 if sid + 1 == gv.sd['mas']:
                                     continue  # skip if this is master station
                                 if gv.srvals[sid]:  # skip if currently on
@@ -130,7 +136,7 @@ def timing_loop():
                                         gv.ps[sid][0] = i + 1  # store program number for display
                                         gv.ps[sid][1] = duration
                                     else:  # concurrent mode
-                                        # If duration is shortter than any already set for this station
+                                        # If duration is shorter than any already set for this station
                                         if duration < gv.rs[sid][2]:
                                             continue
                                         else:
@@ -144,6 +150,8 @@ def timing_loop():
             for b in range(gv.sd['nbrd']):  # Check each station once a second
                 for s in range(8):
                     sid = b * 8 + s  # station index
+                    if sid >= gv.sd['nst']:
+                        break
                     if gv.srvals[sid]:  # if this station is on
                         if gv.now >= gv.rs[sid][1]:  # check if time is up
                             gv.srvals[sid] = 0
@@ -205,7 +213,7 @@ def timing_loop():
                     gv.rs.append([0, 0, 0, 0])
                 gv.sd['bsy'] = 0
 
-            if gv.sd['mas'] and (gv.sd['mm'] or not gv.sd['seq']):  # handle master for maual or concurrent mode.
+            if gv.sd['mas'] and (gv.sd['mm'] or not gv.sd['seq']):  # handle master for manual or concurrent mode.
                 mval = 0
                 for sid in range(gv.sd['nst']):
                     bid = sid / 8
@@ -299,12 +307,6 @@ if __name__ == '__main__':
     print _('Station Control plugin:')
     print ' ', gv.scontrol.__class__.__name__
 
-    #try:
-    #    import controlPlugins
-    #    print _('Station Control plugin:')
-    #except Exception:
-    #    pass
-    #print ' ', controlPlugins.__all__
 
 
     thread.start_new_thread(timing_loop, ())

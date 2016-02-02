@@ -47,17 +47,20 @@ class BaseControlPlugin(Singleton):
     Base Class to implement Control Plugins interfaces
     """
 
-    def __init__(self, defaultParameters={}):
+    def __init__(self, defaultParameters):
         """
         Construct a new Control Plugin object.
         :params: options
             dictionary with the default options that the plugin must use
         :return: returns nothing
         """
-        self.lock = threading.RLock()
-        self._params = self.load_params(defaultParameters)
-        self._maxOnStations = 5  # Max Numer of stations that can be powered at the same time.
+        self._lock = threading.RLock()
+        self._platform = ''
+        self._options = [] # List of options
+        self._parameters = self.load_params(defaultParameters)
+        self._maxOnStations = 5  # Max Numer of stations that can be powered at the same time.- Ignored
         self._stationState = []  # list of one byte per station, 1 = turn on, 0 = turn off
+
 
     def load_params(self, defaultParameters):
         paramFile = os.path.join(".", "data", self.__class__.__name__) + ".json"
@@ -73,26 +76,88 @@ class BaseControlPlugin(Singleton):
         return params
 
     @property
-    def params(self):
-        return self._params
+    def platform(self):
+        return self._platform
 
-    @params.setter
-    def params(self, parameters):
+    @property
+    def maxStations(self):
+        raise NameError('Must be implemented in the derived class')
+
+    @property
+    def nStations(self):
+        return len(self._stationState)
+
+#    @nStations.setter
+#     def nStations(self, number):
+#          """
+#         Must be overloaded by the child class to make the change persistent
+#         @param self:
+#        @param number: #
+#        @ return:
+#         """
+#        if self.nStations <= number:
+#            self._stationState = self._stationState + [0] * ( number - self.nStations)
+#         else:
+#             self._stationState = self._stationState[:number]
+
+    @property
+    def _params(self):
+        return self._parameters
+
+    @_params.setter
+    def _params(self, params):
+        """ Must be overloaded to make sure that the changes are activated in the current live
+            The "user" must only change the options parameters
+        """
         # TODO: Add some simple validations
-        self._params = parameters
-
+        self._parameters = params
+        paramFile = os.path.join(".", "data", self.__class__.__name__) + ".json"
+        with open(paramFile, 'w') as f:
+            json.dump(params, f)
 
     @property
     def stations(self):
         """
         Return the list of stations available and the current State
         """
-        with self.lock:
+        with self._lock:
             return self._stationState
 
     @stations.setter
     def stations(self, newStationsState):
         raise NameError('Must be implemented in the derived class')
+
+    def changeStationNumber(self, newStationNumber):
+        raise NameError('Must be implemented in the derived class')
+
+    @property
+    def options(self):
+        """
+        Return the options, including the default current value
+        @param number:
+        @return:
+        """
+
+        r_opt = []
+        for opt in self._options:
+            r_opt = r_opt + [opt + [self._params[opt[0]]]]
+
+        return r_opt
+
+    @options.setter
+    def options(self, n_opt):
+        """
+        Set the new options, the program MUST be restarted, does not changes the current configuration
+        @param number:
+        @return:
+        """
+        print "N Opts:", str(n_opt)
+        p = self._params
+
+        for opt in n_opt:
+            p[opt[0]] = opt[5]
+        self._params = p
+
 
     @property
     def maxOnStations(self):
@@ -122,3 +187,29 @@ class BaseControlPlugin(Singleton):
         """
         self.stations = ([0] * len(self._stationState))
         return  self.stations
+
+    def pinCleanUp(self):
+        """
+        Stop al Stations and clean pin State
+        @return:
+        """
+        raise NameError('Must be implemented in the derived class')
+
+
+class BaseBoardPlugin(Singleton):
+    """
+    Base class to implement a HW abstraction layer to control the PINS
+    """
+    pass
+
+class RaspberryBoard(BaseBoardPlugin):
+    """
+    Implements RaspBerry PI HW management
+    """
+    pass
+
+class BeagleboneBoard(BaseBoardPlugin):
+    """
+    Implements BeagleboneBoard
+    """
+    pass

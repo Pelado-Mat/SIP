@@ -1,0 +1,106 @@
+$def with (errorCode)
+
+$var title: $_('SIP HW Options')
+$var page: hw_options
+$code:
+	opts = gv.scontrol.options
+	languages = i18n.languages
+	langKeys = i18n.languages.keys()
+	langKeys.sort()
+
+
+<script>
+    var errorCode = "${errorCode}";
+    // Initialize behaviors
+    jQuery(document).ready(function(){
+
+        jQuery("button#tooltips").click(function(){
+            var visible = jQuery(this).text() == $:{json.dumps(_('Hide Tooltips'), ensure_ascii=False)};
+            jQuery(this).text(visible ? $:{json.dumps(_('Show Tooltips'), ensure_ascii=False)} : $:{json.dumps(_('Hide Tooltips'), ensure_ascii=False)});
+            jQuery(".tooltip").toggle();
+        });
+
+
+        jQuery("button#cSubmit").click(function(){
+            jQuery("form[name='of']").submit();
+        });
+
+        jQuery("button#cCancel").click(function(){
+            window.location= baseUrl + "/";
+        });
+
+        jQuery(".collapsible h4").click(function(event){
+            jQuery(this).parent(".category").toggleClass("expanded").toggleClass("collapsed");
+        });
+
+        switch (errorCode) {
+            case "pw_wrong":
+                jQuery("#erroropw").text($:{json.dumps(_('The password given was incorrect.'), ensure_ascii=False)});
+                jQuery("#erroropw").parents(".collapsible").toggleClass("expanded").toggleClass("collapsed");
+                break;
+            case "pw_blank":
+                jQuery("#errornpw").text($:{json.dumps(_('Please enter a password.'), ensure_ascii=False)});
+                jQuery("#errornpw").parents(".collapsible").toggleClass("expanded").toggleClass("collapsed");
+                break;
+            case "pw_mismatch":
+                jQuery("#errorcpw").text($:{json.dumps(_("Passwords don't match, please re-enter."), ensure_ascii=False)});
+                jQuery("#errorcpw").parents(".collapsible").toggleClass("expanded").toggleClass("collapsed");
+                break;
+            case "too_many_stations":
+                jQuery("#errornst").text($:{json.dumps(_("The HW do not support so many Stations."), ensure_ascii=False)});
+                jQuery("#errornst").parents(".collapsible").toggleClass("expanded").toggleClass("collapsed");
+                break;
+
+        }
+
+        jQuery(".collapsible h4").first().parent(".category").toggleClass("expanded").toggleClass("collapsed");
+
+    });
+
+</script>
+<div id="options">
+    <div class="title">$_('Edit HW Options')</div>
+    <button id="tooltips">$_('Show Tooltips')</button>
+    <form name="of" action="${app_path('/chwo')}" method="get">
+    $code:
+        output = ""
+        oldcategory = ""
+        categoryCloser = ""
+        avscontrol = gv.avscontrol
+        for opt in opts:
+            name = opt[0]
+            label = opt[1]
+            datatype = opt[2]
+            value = opt[5]
+            tooltip = opt[3]
+            category = opt[4]
+
+            if category != oldcategory:
+                output += categoryCloser + "<div class='category collapsible collapsed'><h4>" + category + "</h4>"
+                categoryCloser = "</div>"
+            oldcategory = category
+            output += "<div class='option' title='" + tooltip + "'><span class='label'>" + label + ":</span>\n"
+            if datatype == "boolean":
+                output += "<input name='o" + name + "' type='checkbox' " + ("checked" if value>0 else "") + ">\n"
+            elif datatype == "string":
+                output += "<input name='o" + name + "' type='text' size='31' maxlength='31' value=\"" + value + "\">\n"
+            elif datatype == "password":
+                output += "<input name='" + name + "' type='password' size='31' maxlength='31'><span class='inputError' id='error" + name + "'></span>\n"
+            elif datatype == "int":
+                value = str(value)
+                output += "<input name='o" + name + "' type='text' size='31' maxlength='31' value=\"" + value + "\">\n"
+            elif datatype == "array":
+                value = ','.join(str(x) for x in value)
+                output += "<input name='o" + name + "' type='text' size='31' maxlength='100' value=\"" + value + "\">\n"
+
+            output += "<span class='tooltip'>" + tooltip + "</span>\n"
+            output += "</div>\n\n"
+        output += categoryCloser
+    $:{output}
+    </form>
+</div>
+
+<div id="controls">
+    <button id='cSubmit' class="submit">$_('Submit Changes')</button>
+    <button id='cCancel' class="cancel danger">$_('Cancel')</button>
+</div>

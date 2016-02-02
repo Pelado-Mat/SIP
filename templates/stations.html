@@ -94,6 +94,8 @@ $code:
             $for bid in range(0,gv.sd['nbrd']):
                 $for s in range(0,8):
                     $ sid = bid*8 + s;
+                    $if sid >= gv.sd['nst']:
+                        $break
                     <tr>
                         <td class="stationNumber">${sid + 1}</td>
                         <td class="stationName">

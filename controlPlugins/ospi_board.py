@@ -17,6 +17,7 @@ except ImportError:
         GPIO = None
         print 'No GPIO module was loaded from GPIO Pins module'
 
+import time
 
 class OspiBoardControl(BaseControlPlugin):
 
@@ -24,20 +25,24 @@ class OspiBoardControl(BaseControlPlugin):
         defParams = self.__autoconfigure_parms()
         super(OspiBoardControl, self).__init__(defParams)
         # Parameters
-        self.nStations = self.params['nStations']
-        self.nbrd = int(self.params['nStations'] / self.params['nst_per_board']) + (self.params['nStations'] & self.params['nst_per_board'] > 0 )
-        self._maxOnStations = self.params['maxOnStations']
-
+        self.nbrd = int(self._params['nStations'] / self._params['nst_per_board']) + (self._params['nStations'] & self._params['nst_per_board'] > 0)
+        self._maxOnStations = self._params['maxOnStations']
+        self._options = [
+            ['nStations', _("Number of Stations"), "int", _("Number of installed Stations"), _("Stations")],
+            ['pin_rain_sense',_("Rain Sensor Pin"),"int", _("GPIO PIN used for the Rain Sensor"),_("System HW")]
+        ]
         # Private
-        self._nst_per_board = self.params['nst_per_board']
-        self._platform = self.params['platform']
-        self._pin_map = self.params['pin_map']
-        self._pin_rain_sense = self.params['pin_rain_sense']
-        self._pin_relay = self.params['pin_relay']
-        self._pin_sr = self.params['pin_sr']
+        self._nst_per_board = self._params['nst_per_board']
+        self._maxStations = 256
+        self._platform = self._params['platform']
+        self._pin_map = self._params['pin_map']
+        self._pin_rain_sense = self._params['pin_rain_sense']
+        self._pin_relay = self._params['pin_relay']
+        self._pin_sr = self._params['pin_sr']
         self._pi = None
-        # Internal State
-        self._stationState = [0] * (self.nStations)
+
+        self._stationState = [0] * self._params['nStations']
+
 
         try:
             import pigpio
@@ -233,6 +238,11 @@ class OspiBoardControl(BaseControlPlugin):
         except Exception:
             pass
 
+    @property
+    def maxStations(self):
+        return self._maxStations
+    
+
     @BaseControlPlugin.stations.setter
     def stations(self, newStationState):
         """
@@ -244,7 +254,7 @@ class OspiBoardControl(BaseControlPlugin):
         if len(newStationState) != len(self._stationState):
             raise NameError("ERROR: The number of stations is not equal")
 
-        with self.lock:
+        with self._lock:
             if GPIO:
                 self.__disableShiftRegisterOutput()
                 self.__setShiftRegister(newStationState)
@@ -254,6 +264,16 @@ class OspiBoardControl(BaseControlPlugin):
                 print "GPIO not defined, cannot change the stations!"
         return self._stationState
 
+    def pinCleanUp(self):
+        self.stopStations()
+        time.sleep(1)
+
+    @BaseControlPlugin.nStations.setter
+    def nStations(self, number):
+        BaseControlPlugin.nStations.fset(self, number)
+        prms = self._params
+        prms['nStations'] = number
+        self._params = prms
 
 
 import gv

@@ -95,7 +95,7 @@ class change_values(ProtectedPage):
 
     def GET(self):
         qdict = web.input()
-        print 'qdict: ', qdict
+       # print 'qdict: ', qdict
         if 'rsn' in qdict and qdict['rsn'] == '1':
             stop_stations()
             raise web.seeother('/')
@@ -121,6 +121,84 @@ class change_values(ProtectedPage):
         report_value_change()
         raise web.seeother('/')  # Send browser back to home page
 
+class view_hw_options(ProtectedPage):
+    """Open the hw options page for viewing and editing."""
+
+    def GET(self):
+        qdict = web.input()
+        errorCode = "none"
+        if 'errorCode' in qdict:
+            errorCode = qdict['errorCode']
+
+        return template_render.hw_options(errorCode)
+
+class change_hw_options(ProtectedPage):
+    """
+    Save changes to Control Plugin Parameters made on the HW options page
+    TODO!!!!
+           - Must do housekeeping if the number of stations is changed!
+    """
+    def GET(self):
+        qdict = web.input()
+        r = []
+        hw_options = gv.scontrol.options
+        for opt in hw_options:
+            p = opt[0]
+            # FIXME! Should add some validations!
+            datatype = opt[2]
+            value = qdict['o' + p]
+            if datatype == 'int':
+                value = int(value)
+            elif datatype == 'array':
+                value = [int(x) for x in value.split(',')]
+            elif datatype == 'boolean':
+                if value == 'on':
+                    value = True
+                else:
+                    value = False
+            if opt[0] == 'nStations':
+                self.update_scount(value)
+            opt[5] = value
+            r.append(opt)
+        gv.scontrol.options = r
+        restart(2)
+        raise web.seeother('/restart')
+
+    def update_scount(self, nStations):
+        """Increase or decrease the number of stations displayed when number of expansion boards is changed in options."""
+        nbrd =  int(nStations / 8) + (nStations % 8 > 0 )
+        if nbrd > gv.sd['nbrd']:  # Lengthen lists
+            incr = nbrd - gv.sd['nbrd']
+            for i in range(incr):
+                gv.sd['mo'].append(0)
+                gv.sd['ir'].append(0)
+                gv.sd['iw'].append(0)
+                gv.sd['show'].append(255)
+            ln = len(gv.snames)
+            for i in range(incr*8):
+                gv.snames.append("S"+"{:0>2d}".format(i+1+ln))
+            for i in range(incr * 8):
+                gv.srvals.append(0)
+                gv.ps.append([0, 0])
+                gv.rs.append([0, 0, 0, 0])
+            for i in range(incr):
+                gv.sbits.append(0)
+        elif nbrd < gv.sd['nbrd']:  # Shorten lists
+            onbrd = int(qdict['onbrd'])
+            decr = gv.sd['nbrd'] - onbrd
+            gv.sd['mo'] = gv.sd['mo'][:onbrd]
+            gv.sd['ir'] = gv.sd['ir'][:onbrd]
+            gv.sd['iw'] = gv.sd['iw'][:onbrd]
+            gv.sd['show'] = gv.sd['show'][:onbrd]
+            newlen = gv.sd['nst'] - decr * 8
+            gv.srvals = gv.srvals[:newlen]
+            gv.ps = gv.ps[:newlen]
+            gv.rs = gv.rs[:newlen]
+            gv.snames = gv.snames[:newlen]
+            gv.sbits = gv.sbits[:onbrd]
+        jsave(gv.snames, 'snames')
+
+
 
 class view_options(ProtectedPage):
     """Open the options page for viewing and editing."""
@@ -132,6 +210,7 @@ class view_options(ProtectedPage):
             errorCode = qdict['errorCode']
 
         return template_render.options(errorCode)
+
 
 
 class change_options(ProtectedPage):
@@ -164,11 +243,25 @@ class change_options(ProtectedPage):
                     qdict['rstrt'] = '1'  # force restart with change
                 gv.sd[f] = qdict['o'+f]
 
-        if int(qdict['onbrd']) + 1 != gv.sd['nbrd']:
-            self.update_scount(qdict)
+        if 'ocontrolName' in qdict:
+            if 'ocontrolName' != gv.sd['controlName']:
+                gv.sd['controlName'] = qdict['ocontrolName']
+                qdict['rstrt'] = '1'  # force restart with change
 
-        gv.sd['nbrd'] = int(qdict['onbrd']) + 1
-        gv.sd['nst'] = gv.sd['nbrd'] * 8
+
+       # if gv.sd['nst'] != int(qdict['onst']):
+       #     if int(qdict['onst']) > gv.scontrol.maxStations:
+       #         raise web.seeother('/vo?errorCode=too_many_stations')
+
+         #   gv.sd['nst'] = int(qdict['onst'])
+         #   gv.scontrol.nStations = gv.sd['nst']
+         #   nbrd = int(gv.scontrol.nStations / 8) + (gv.scontrol.nStations % 8 > 0 )
+         #   qdict['onbrd'] = nbrd # FIXME! Emulate 'nbrd'
+         #   if int(qdict['onbrd'])  != gv.sd['nbrd']:
+         #       self.update_scount(qdict)
+
+         #   gv.sd['nbrd'] = nbrd
+
 
         if 'ohtp' in qdict:
             if 'htp' not in gv.sd or gv.sd['htp'] != int(qdict['ohtp']):
@@ -195,45 +288,10 @@ class change_options(ProtectedPage):
             reboot()
 
         if 'rstrt' in qdict and qdict['rstrt'] == '1':
-#            restart(2)
+            restart(2)
             raise web.seeother('/restart')
         raise web.seeother('/')
 
-    def update_scount(self, qdict):
-        """Increase or decrease the number of stations displayed when number of expansion boards is changed in options."""
-        if int(qdict['onbrd']) + 1 > gv.sd['nbrd']:  # Lengthen lists
-            incr = int(qdict['onbrd']) - (gv.sd['nbrd'] - 1)
-            for i in range(incr):
-                gv.sd['mo'].append(0)
-                gv.sd['ir'].append(0)
-                gv.sd['iw'].append(0)
-                gv.sd['show'].append(255)
-            ln = len(gv.snames)
-            for i in range(incr*8):
-                gv.snames.append("S"+"{:0>2d}".format(i+1+ln))
-            for i in range(incr * 8):
-                gv.srvals.append(0)
-                gv.ps.append([0, 0])
-                gv.rs.append([0, 0, 0, 0])
-            for i in range(incr):
-                gv.sbits.append(0)
-        elif int(qdict['onbrd']) + 1 < gv.sd['nbrd']:  # Shorten lists
-            onbrd = int(qdict['onbrd'])
-            decr = gv.sd['nbrd'] - (onbrd + 1)
-            gv.sd['mo'] = gv.sd['mo'][:(onbrd + 1)]
-            gv.sd['ir'] = gv.sd['ir'][:(onbrd + 1)]
-            gv.sd['iw'] = gv.sd['iw'][:(onbrd + 1)]
-            gv.sd['show'] = gv.sd['show'][:(onbrd + 1)]
-            # unused variables
-            # nlst = gv.snames
-            # nlst = nlst[:8+(onbrd*8)]
-            newlen = gv.sd['nst'] - decr * 8
-            gv.srvals = gv.srvals[:newlen]
-            gv.ps = gv.ps[:newlen]
-            gv.rs = gv.rs[:newlen]
-            gv.snames = gv.snames[:newlen]
-            gv.sbits = gv.sbits[:onbrd + 1]
-        jsave(gv.snames, 'snames')
 
 
 class view_stations(ProtectedPage):
@@ -516,6 +574,8 @@ class api_status(ProtectedPage):
                     irbit = (gv.sd['ir'][bid] >> s) & 1
                     status = {'station': sid, 'status': 'disabled', 'reason': '', 'master': 0, 'programName': '',
                               'remaining': 0}
+                    if sid >= gv.sd['nst']: # FIXME: more nbrd madness!
+                        break
                     if gv.sd['en'] == 1:
                         if sbit:
                             status['status'] = 'on'
