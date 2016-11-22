@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import i18n
@@ -25,11 +25,6 @@ from ReverseProxied import ReverseProxied
 # set_output()
 
 gv.restarted = 1
-
-try:
-    gv.os_cname = subprocess.check_output(['lsb_release', '-c'])[10:-1]
-except Exception:
-    gv.os_cname = "not found"
 
 def timing_loop():
     """ ***** Main timing algorithm. Runs in a separate thread.***** """
@@ -58,7 +53,7 @@ def timing_loop():
                                 if gv.srvals[sid]:  # skip if currently on
                                     continue
 
-            				# station duration condionally scaled by "water level"
+                                # station duration condionally scaled by "water level"
                                 if gv.sd['iw'][b] & 1 << s:
                                     duration_adj = 1.0
                                     duration = p[6] 
